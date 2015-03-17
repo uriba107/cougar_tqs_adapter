@@ -1,0 +1,34 @@
+== TM cougar TQS USB adapter ==
+This is a DIY USB adapter to make your TM Cougar throttle work as a standalone USB device.
+
+This software is distributed under BSD license, and is provided as is and without any warranty what so ever.
+
+http://pits.108vfs.org
+
+==== Other useful stuff ====
+===== Hardware =====
+My version is based on Atmel ATMEGA 32u4 chip. 
+I've been using a replica of Sparkfun's Arduino Pro-Micro, with other versions YMMV.
+Schematics can be found in the "hardware" folder.
+for more details on the build process:
+http://pits.108vfs.org/uriba/standalone-cougar-tqs-part-i/
+
+
+===== Software =====
+Source code provided can compiled and opened using Atmel Studio 6.2.
+for more details check out the relevent blog posts:
+http://pits.108vfs.org/uriba/standalone-cougar-tqs-part-ii/
+http://pits.108vfs.org/uriba/standalone-cougar-tqs-part-iii/
+
+===== Installation =====
+Connect the Arduino Pro-micro to the computer, Drivers may be needed.
+press the reset button twice in rapid succession to force device into "bootloader" mode.
+Your computer will now Identify a new device, please note this device's COM port.
+from the AVRdude folder, run the "upload_code.bat" file. In the window opened, type the device's com port number (eg. if device is on COM12, type "12").
+double press the reset button of the arduino to force it into bootloaded mode again, and hit Enter. The code will now be uploaded to device. once completed, the device should register as a new joystick.
+
+====== Debugging ======
+In the "TQS_debugging" folder, you will find an Arduino sketch to help you debug the hardware.
+it will sample the device in exactly the same way the actual code does, but outputs the data out via the Serial console.
+compile using "Arduino Micro" in the Arduino IDE.
+
