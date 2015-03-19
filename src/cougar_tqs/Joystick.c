@@ -124,8 +124,17 @@ uint8_t ReadMinistick(uint8_t adcChannel,bool invert_axis) {
 	};
 }
 
+#define DEADZONE 25
+#define ReadX ReadMinistick(4,1)
+#define ReadY ReadMinistick(5,0)
+Microstick_Report_Data_t MicrostickZero = {0};
 Axis_Report_Data_t AxisLastRun = {0};
 Microstick_Report_Data_t MicrostickHistory[3] = {0};
+
+void ReadMicrostickZero() {
+	MicrostickZero.X = (ReadX+ReadX)/2;
+	MicrostickZero.Y = (ReadY+ReadY)/2;
+}	
 	
 /** Main program entry point. This routine contains the overall program flow, including initial
 *  setup of all components and the main program loop.
@@ -139,7 +148,7 @@ int main(void)
 	SetupPins();
 	SetupSPI();
 	SetupADC();
-
+	ReadMicrostickZero();
 
 	for (;;)
 	{
@@ -249,10 +258,14 @@ uint16_t* const ReportSize)
     uint16_t buttonbuffer = 0;
 
 	PORTD &= ~(1 << PD4); // pull "pin 4" down
-	JoystickReport->X = (((ReadMinistick(4,1)*4)+(MicrostickHistory[0].X*3)+(MicrostickHistory[1].X*2)+MicrostickHistory[2].X)/10); // run ADC conversion as delay, do average in 3:1 ratio to reduce jitter
+	JoystickReport->X = (((ReadX*4)+(MicrostickHistory[0].X*3)+(MicrostickHistory[1].X*2)+MicrostickHistory[2].X)/10); // run ADC conversion as delay, do average in 3:1 ratio to reduce jitter
 	//if (abs(JoystickReport->X - ((AxisLastRun[0].X+AxisLastRun[1].X)/2)) < 4) {
 		//JoystickReport->X = AxisLastRun[0].X;
 	//}
+	if (abs((int32_t)JoystickReport->X-(int32_t)MicrostickZero.X) < DEADZONE)
+	{
+		JoystickReport->X = MicrostickZero.X;
+	}
 	// T6
 	if ((PIND & _BV(7))) {
 		buttonbuffer &= ~(1 << 6);
@@ -269,10 +282,11 @@ uint16_t* const ReportSize)
 
 	// poll toggles	T2-5
 	PORTD &= ~(1 << PD1); // pull "pin 3" down
-	JoystickReport->Y =  (((ReadMinistick(5,0)*4)+(MicrostickHistory[0].Y*3)+(MicrostickHistory[1].Y*2)+MicrostickHistory[2].Y)/10); // run ADC conversion as delay, do average in 3:1 ratio to reduce jitter
-	//if (abs(JoystickReport->Y - LastRun[0].Y) < 3) {
-		//JoystickReport->Y = LastRun[0].Y;
-	//}
+	JoystickReport->Y =  (((ReadY*4)+(MicrostickHistory[0].Y*3)+(MicrostickHistory[1].Y*2)+MicrostickHistory[2].Y)/10); // run ADC conversion as delay, do average in 3:1 ratio to reduce jitter
+	if (abs((int32_t)JoystickReport->Y-(int32_t)MicrostickZero.Y) < DEADZONE)
+	{
+		JoystickReport->Y = MicrostickZero.Y;
+	}
 	//T2
 	if ((PIND & _BV(7))) {
 		buttonbuffer &= ~(1 << 2);
