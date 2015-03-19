@@ -1,21 +1,38 @@
 #include <SPI.h>
 
 struct tqs {
-  uint16_t  X: 10; /**< Current absolute joystick X position, as a signed 8-bit integer */
-  uint16_t  Y: 10; /**< Current absolute joystick Y position, as a signed 8-bit integer */
+  int16_t  X: 10; /**< Current absolute joystick X position, as a signed 8-bit integer */
+  int16_t  Y: 10; /**< Current absolute joystick Y position, as a signed 8-bit integer */
   uint16_t  Z: 12; /**< Current absolute joystick Z position, as a signed 8-bit integer */
   uint16_t  ANT: 10; /**< Current absolute joystick Y position, as a signed 8-bit integer */
   uint16_t  RNG: 10; /**< Current absolute joystick Y position, as a signed 8-bit integer */
   uint16_t Buttons: 10;
 };
 
+struct Microstick {
+    int8_t X;
+    int8_t Y;
+};
+
 tqs throttle = {0};
+Microstick microstick_zero = {0};
 
 int32_t mapLargeNumbers(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max)
 {     
 	#define FACTOR 10000
 	int ratio = ((((float)out_max - (float)out_min) / ((float)in_max - (float)in_min))*FACTOR);
 	return (((x - in_min) * (ratio))/FACTOR) + out_min;
+}
+
+void GetMicrostickZero() {
+    uint32_t x = (analogRead(3)+analogRead(3)+analogRead(3))/3;
+    uint32_t y = (analogRead(2)+analogRead(2)+analogRead(2))/3;
+
+//
+  microstick_zero.X = map(x,250,850,-127,128);
+  microstick_zero.Y = map(y,250,850,-127,128);
+  
+
 }
 
 uint16_t pullMatrix(void) {
@@ -117,6 +134,7 @@ uint16_t Readthrottle(void) {
   digitalWrite(10, HIGH);
   return mapLargeNumbers(buff,400,3650,0,4095);
 }
+
 void setup() {
   // put your setup code here, to run once:
   pinMode(6, INPUT);
@@ -137,6 +155,8 @@ void setup() {
   SPI.setClockDivider(SPI_CLOCK_DIV8);
   Serial.begin(9600);
   Serial.println("Start");
+  
+  GetMicrostickZero();
 }
 
 short col = 2;
@@ -163,8 +183,8 @@ void loop() {
   int x = analogRead(3);
   int y = analogRead(2);
 //
-  throttle.X = map(x,250,850,0,255);
-  throttle.Y = map(y,250,850,0,255);
+  throttle.X = map(x,250,850,-127,128);
+  throttle.Y = map(y,250,850,-127,128);
 //
   if (x > xmax) {
     xmax = x;
@@ -184,29 +204,38 @@ void loop() {
   throttle.Buttons = pullMatrix();
 
   /// Print stuff
-    Serial.print(" | Throttle: ");
-    Serial.print(throttle.Z);
-//    Serial.print(",Throttle max: ");
-//    Serial.print(throttlemax);
-//    Serial.print(",Throttle min: ");
-//    Serial.print(throttlemin);
-
+//    Serial.print(" | Throttle: ");
+//    Serial.print(throttle.Z);
+////    Serial.print(",Throttle max: ");
+////    Serial.print(throttlemax);
+////    Serial.print(",Throttle min: ");
+////    Serial.print(throttlemin);
+//
     Serial.print(" | ministick: ");
     Serial.print(throttle.X);
+//        Serial.print(x);
     Serial.print(',');
     Serial.print(throttle.Y);
-//    Serial.print(",X max: ");
-//    Serial.print(xmax);
-//    Serial.print(",X min: ");
-//    Serial.print(xmin);
-////  //
-    Serial.print(" | axis: ");
-    Serial.print(throttle.RNG);
-    Serial.print(',');
-    Serial.print(throttle.ANT);
-  //
-    Serial.print(" | buttons: ");
-    Serial.print(throttle.Buttons, BIN);
+//    Serial.print(y);
+
+////    Serial.print(",X max: ");
+////    Serial.print(xmax);
+////    Serial.print(",X min: ");
+////    Serial.print(xmin);
+  Serial.print(" | Microstick_zero: ");
+  Serial.print(microstick_zero.X);
+  Serial.print(",");
+  Serial.print(microstick_zero.Y);
+//////  //
+//    Serial.print(" | axis: ");
+//    Serial.print(throttle.RNG);
+//    Serial.print(',');
+//    Serial.print(throttle.ANT);
+//  //
+//    Serial.print(" | buttons: ");
+//    Serial.print(throttle.Buttons, BIN);
+
+
 Serial.println("");
 
 delay(500);
