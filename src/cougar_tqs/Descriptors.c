@@ -73,7 +73,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
 	.VendorID               = 0x03EB,
 	.ProductID              = 0x2043,
-	.ReleaseNumber          = VERSION_BCD(0,0,1),
+	.ReleaseNumber          = VERSION_BCD(0,0,2),
 
 	.ManufacturerStrIndex   = STRING_ID_Manufacturer,
 	.ProductStrIndex        = STRING_ID_Product,
@@ -95,7 +95,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 //
 	//.VendorID               = 0x044F,
 	//.ProductID              = 0xBBBB,
-	//.ReleaseNumber          = VERSION_BCD(0,0,1),
+	//.ReleaseNumber          = VERSION_BCD(0,0,2),
 //
 	//.ManufacturerStrIndex   = STRING_ID_Manufacturer,
 	//.ProductStrIndex        = STRING_ID_Product,
@@ -173,7 +173,7 @@ const USB_Descriptor_String_t PROGMEM LanguageString = USB_STRING_DESCRIPTOR_ARR
  *  form, and is read out upon request by the host when the appropriate string ID is requested, listed in the Device
  *  Descriptor.
  */
-const USB_Descriptor_String_t PROGMEM ManufacturerString = USB_STRING_DESCRIPTOR(L"Uri Ben-Avraham");
+const USB_Descriptor_String_t PROGMEM ManufacturerString = USB_STRING_DESCRIPTOR(L"Uri_ba");
 
 /** Product descriptor string. This is a Unicode string containing the product's details in human readable form,
  *  and is read out upon request by the host when the appropriate string ID is requested, listed in the Device

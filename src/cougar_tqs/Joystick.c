@@ -124,7 +124,7 @@ uint8_t ReadMinistick(uint8_t adcChannel,bool invert_axis) {
 	};
 }
 
-#define DEADZONE 25
+#define DEADZONE 15
 #define ReadX ReadMinistick(4,1)
 #define ReadY ReadMinistick(5,0)
 Microstick_Report_Data_t MicrostickZero = {0};

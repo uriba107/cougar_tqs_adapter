@@ -31,3 +31,14 @@ In the "*TQS_debugging*" folder, you will find an Arduino sketch to help you deb
 it will sample the device in exactly the same way the actual code does, but outputs the data out via the Serial console.
 compile using "Arduino Micro" in the Arduino IDE.
 
+###### Fun Facts
+resolution of the device:
+| Axis | resolution |
+|:-----|:----------:|
+|Throttle|12bits|
+|Microstick|8 bits|
+|ANT|10bits|
+|RNG|10bits|
+
+The code in action:
+[![IMAGE ALT TEXT HERE](http://img.youtube.com/vi/_ej5wT5lJjc/0.jpg)](https://www.youtube.com/watch?v=_ej5wT5lJjc)
