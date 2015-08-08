@@ -60,6 +60,7 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] =
  *  number of device configurations. The descriptor is read out by the USB host when the enumeration
  *  process begins.
  */
+
 const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 {
 	.Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
@@ -70,9 +71,13 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 	.Protocol               = USB_CSCP_NoDeviceProtocol,
 
 	.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
-
+#ifdef USE_TM_VID
+	.VendorID               = 0x044F,
+	.ProductID              = 0xBBBB,
+#else
 	.VendorID               = 0x03EB,
 	.ProductID              = 0x2043,
+#endif
 	.ReleaseNumber          = VERSION_BCD(0,0,2),
 
 	.ManufacturerStrIndex   = STRING_ID_Manufacturer,
@@ -81,28 +86,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
 	.NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
 };
-//
-//const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
-//{
-	//.Header                 = {.Size = sizeof(USB_Descriptor_Device_t), .Type = DTYPE_Device},
-//
-	//.USBSpecification       = VERSION_BCD(1,1,0),
-	//.Class                  = USB_CSCP_NoDeviceClass,
-	//.SubClass               = USB_CSCP_NoDeviceSubclass,
-	//.Protocol               = USB_CSCP_NoDeviceProtocol,
-//
-	//.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
-//
-	//.VendorID               = 0x044F,
-	//.ProductID              = 0xBBBB,
-	//.ReleaseNumber          = VERSION_BCD(0,0,2),
-//
-	//.ManufacturerStrIndex   = STRING_ID_Manufacturer,
-	//.ProductStrIndex        = STRING_ID_Product,
-	//.SerialNumStrIndex      = NO_DESCRIPTOR,
-//
-	//.NumberOfConfigurations = FIXED_NUM_CONFIGURATIONS
-//};
+
 /** Configuration descriptor structure. This descriptor, located in FLASH memory, describes the usage
  *  of the device in one of its supported configurations, including information about any device interfaces
  *  and endpoints. The descriptor is read out by the USB host during the enumeration process when selecting

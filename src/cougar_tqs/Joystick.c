@@ -33,6 +33,8 @@ this software.
 *  Main source file for the Joystick demo. This file contains the main tasks of
 *  the demo and is responsible for the initial application hardware configuration.
 */
+#define COUGAR_OLD
+//#define USE_TM_VID
 
 #include "Joystick.h"
 #include "LUFA/Drivers/Peripheral/ADC.h"
@@ -123,10 +125,31 @@ uint8_t ReadMinistick(uint8_t adcChannel,bool invert_axis) {
 		return  map(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC),250,850,0,255);
 	};
 }
+uint16_t ReadAxis(uint8_t adcChannel,bool invert_axis) {
+	if (invert_axis) {
+		return  ~(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC));
+		} else {
+		return  ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC);
+	};
+}
 
+
+#ifdef COUGAR_OLD
+	#define X_PIN 4
+	#define Y_PIN 5
+	#define ANT_PIN 6
+	#define RNG_PIN 7
+#else
+	#define X_PIN 7
+	#define Y_PIN 6
+	#define ANT_PIN 4
+	#define RNG_PIN 5
+#endif
 #define DEADZONE 15
-#define ReadX ReadMinistick(4,1)
-#define ReadY ReadMinistick(5,0)
+#define ReadX ReadMinistick(X_PIN,1)
+#define ReadY ReadMinistick(Y_PIN,0)
+#define ReadANT ReadAxis(ANT_PIN,0)
+#define ReadRNG ReadAxis(RNG_PIN,0)
 Microstick_Report_Data_t MicrostickZero = {0};
 Axis_Report_Data_t AxisLastRun = {0};
 Microstick_Report_Data_t MicrostickHistory[3] = {0};
@@ -315,7 +338,7 @@ uint16_t* const ReportSize)
 	//Serial.println(buttons, BIN);
 	// poll toggles	T7-10
 	PORTD &= ~(1 << PD0); // pull "pin 3" down
-	JoystickReport->RNG = (((ADC_GetChannelReading(7|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC)*2)+AxisLastRun.RNG)/3); // run ADC conversion as delay
+	JoystickReport->RNG = (((ReadRNG*2)+AxisLastRun.RNG)/3); // run ADC conversion as delay
 	//T7
 	if ((PIND & _BV(7))) {
 		buttonbuffer &= ~(1 << 7);
@@ -342,7 +365,7 @@ uint16_t* const ReportSize)
 	}
 	PORTD |= (1 << PD0); // bring "pin 3" back up
 
-	JoystickReport->ANT = (((ADC_GetChannelReading(6|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC)*2)+AxisLastRun.ANT)/3); // run ADC conversion as delay
+	JoystickReport->ANT = (((ReadANT*2)+AxisLastRun.ANT)/3); // run ADC conversion as delay
 	JoystickReport->Buttons = (buttonbuffer >> 1);
 	// Get Throttle via SPI and average to help reduce jitter
 	//JoystickReport->Z = ((JoystickReport->Z + readSPIADC())/2);

@@ -186,6 +186,7 @@
       </framework-data>
     </AsfFrameworkConfig>
     <avrtool />
+    <preserveEEPROM>true</preserveEEPROM>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>
