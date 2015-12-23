@@ -71,14 +71,14 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 	.Protocol               = USB_CSCP_NoDeviceProtocol,
 
 	.Endpoint0Size          = FIXED_CONTROL_ENDPOINT_SIZE,
-#ifdef USE_TM_VID
+//#ifdef USE_TM_VID
 	.VendorID               = 0x044F,
 	.ProductID              = 0xBBBB,
-#else
-	.VendorID               = 0x03EB,
-	.ProductID              = 0x2043,
-#endif
-	.ReleaseNumber          = VERSION_BCD(0,0,2),
+//#else
+	//.VendorID               = 0x03EB,
+	//.ProductID              = 0x2043,
+//#endif
+	.ReleaseNumber          = VERSION_BCD(0,0,3),
 
 	.ManufacturerStrIndex   = STRING_ID_Manufacturer,
 	.ProductStrIndex        = STRING_ID_Product,

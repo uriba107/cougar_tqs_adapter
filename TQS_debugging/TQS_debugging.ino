@@ -1,8 +1,17 @@
 #include <SPI.h>
 
+#define AXIS_X 3
+#define AXIS_Y 2
+#define AXIS_ANT 0
+#define AXIS_RNG 1
+
+#define READ_X analogRead(AXIS_X)
+#define READ_Y analogRead(AXIS_Y)
+#define READ_ANT analogRead(AXIS_ANT)
+#define READ_RNG analogRead(AXIS_RNG)
 struct tqs {
-  int16_t  X: 10; /**< Current absolute joystick X position, as a signed 8-bit integer */
-  int16_t  Y: 10; /**< Current absolute joystick Y position, as a signed 8-bit integer */
+  uint8_t  X; /**< Current absolute joystick X position, as a signed 8-bit integer */
+  uint8_t  Y; /**< Current absolute joystick Y position, as a signed 8-bit integer */
   uint16_t  Z: 12; /**< Current absolute joystick Z position, as a signed 8-bit integer */
   uint16_t  ANT: 10; /**< Current absolute joystick Y position, as a signed 8-bit integer */
   uint16_t  RNG: 10; /**< Current absolute joystick Y position, as a signed 8-bit integer */
@@ -10,28 +19,77 @@ struct tqs {
 };
 
 struct Microstick {
-    int8_t X;
-    int8_t Y;
+    int16_t X;
+    int16_t Y;
 };
 
 tqs throttle = {0};
 Microstick microstick_zero = {0};
 
-int32_t mapLargeNumbers(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max)
-{     
-	#define FACTOR 10000
-	int ratio = ((((float)out_max - (float)out_min) / ((float)in_max - (float)in_min))*FACTOR);
-	return (((x - in_min) * (ratio))/FACTOR) + out_min;
+int16_t map(int16_t x, int16_t in_min, int16_t in_max, int16_t out_min, int16_t out_max)
+{
+  // check limits to avoid out of bound results
+  if (x < in_min) {
+    return out_min;
+  } else if (x > in_max) {
+    return out_max;
+  } else {
+    // if input checks out, do the math
+    return (int32_t)((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
+  }
 }
 
-void GetMicrostickZero() {
-    uint32_t x = (analogRead(3)+analogRead(3)+analogRead(3))/3;
-    uint32_t y = (analogRead(2)+analogRead(2)+analogRead(2))/3;
+int32_t mapLargeNumbers(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max)
+{     
+  #define FACTOR 10000
+    if (x < in_min) {
+    return out_min;
+  } else if (x > in_max) {
+    return out_max;
+  } else {
+  int ratio = ((((float)out_max - (float)out_min) / ((float)in_max - (float)in_min))*FACTOR);
+  return (((x - in_min) * (ratio))/FACTOR) + out_min;
+  }
+}
 
+int16_t mapCurve(int16_t x, int16_t in_min, int16_t in_max, int16_t out_min, int16_t out_max, int16_t axisZero, float curve)
+{  
+  int16_t midRange = (in_min+in_max)/2;
+  float relativePos = (float)(x - axisZero)/(float)midRange;
+  float curveFactor = pow(abs(relativePos),curve)*pow(curve,2);
+  if (relativePos < 0) {
+    curveFactor *= -1;
+  }
+  int16_t computedVal = ((double)(midRange*curveFactor)+midRange);
+  int16_t retVal = mapLargeNumbers(computedVal,in_min,in_max,out_min,out_max);
+        Serial.print("mapCurve: ");
+    Serial.print(x);
+    Serial.print("|");
+    Serial.print(axisZero); 
+    Serial.print("|");
+    Serial.print(relativePos);
+    Serial.print("|");
+    Serial.print(computedVal);
+    Serial.print("|");
+    Serial.print(retVal);
+    Serial.println("");
+  return retVal;
+}
+
+
+
+void GetMicrostickZero() {
+//    uint32_t x = (analogRead(3)+analogRead(3)+analogRead(3))/3;
+//    uint32_t y = (analogRead(2)+analogRead(2)+analogRead(2))/3;
 //
-  microstick_zero.X = map(x,250,850,-127,128);
-  microstick_zero.Y = map(y,250,850,-127,128);
-  
+////
+//  microstick_zero.X = map(x,250,850,-127,128);
+//  microstick_zero.Y = map(y,250,850,-127,128);
+
+//  microstick_zero.X = map((READ_X+READ_X+READ_X)/3,250,850,-127,128);
+//  microstick_zero.Y = map((READ_Y+READ_Y+READ_Y)/3,250,850,-127,128);
+  microstick_zero.X = (uint32_t)(READ_X+READ_X+READ_X)/3;
+  microstick_zero.Y = (uint32_t)(READ_Y+READ_Y+READ_Y)/3;  
 
 }
 
@@ -178,13 +236,13 @@ void loop() {
   }
 
   // Get Axis data
-  throttle.RNG = analogRead(0);
-  throttle.ANT = analogRead(1);
-  int x = analogRead(3);
-  int y = analogRead(2);
+  throttle.RNG = READ_RNG;
+  throttle.ANT = READ_ANT;
+  int x = READ_X;
+  int y = READ_Y;
 //
-  throttle.X = map(x,250,850,-127,128);
-  throttle.Y = map(y,250,850,-127,128);
+  throttle.X = mapCurve(x,250,850,0,255,microstick_zero.X,3);
+  throttle.Y = mapCurve(y,250,850,0,255,microstick_zero.X,3);
 //
   if (x > xmax) {
     xmax = x;
@@ -227,10 +285,10 @@ void loop() {
   Serial.print(",");
   Serial.print(microstick_zero.Y);
 //////  //
-//    Serial.print(" | axis: ");
-//    Serial.print(throttle.RNG);
-//    Serial.print(',');
-//    Serial.print(throttle.ANT);
+    Serial.print(" | axis: ");
+    Serial.print(throttle.RNG);
+    Serial.print(',');
+    Serial.print(throttle.ANT);
 //  //
 //    Serial.print(" | buttons: ");
 //    Serial.print(throttle.Buttons, BIN);

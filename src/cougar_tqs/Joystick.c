@@ -34,7 +34,14 @@ this software.
 *  the demo and is responsible for the initial application hardware configuration.
 */
 #define COUGAR_OLD
-//#define USE_TM_VID
+#define USE_TM_VID
+
+#define DEADZONE 15
+#define CURVE 3.0
+#define MICROSTICK_MIN 250
+#define MICROSTICK_MAX 850
+#define THROTTLE_MIN 350
+#define THROTTLE_MAX 3600
 
 #include "Joystick.h"
 #include "LUFA/Drivers/Peripheral/ADC.h"
@@ -98,67 +105,104 @@ void SetupPins(void)
 }
 
 
-long map(long x, long in_min, long in_max, long out_min, long out_max)
+int16_t map(int16_t x, int16_t in_min, int16_t in_max, int16_t out_min, int16_t out_max)
 {
-	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	// check limits to avoid out of bound results
+	if (x <= in_min) {
+		return out_min;
+		} else if (x >= in_max) {
+		return out_max;
+		} else {
+		// if input checks out, do the math
+		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+	}
 }
-
 
 int32_t mapLargeNumbers(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max)
 {
 	#define FACTOR 10000
-	int ratio = ((((float)out_max - (float)out_min) / ((float)in_max - (float)in_min))*FACTOR);
-	return (((x - in_min) * (ratio))/FACTOR) + out_min;
+	if (x <= in_min) {
+		return out_min;
+		} else if (x >= in_max) {
+		return out_max;
+		} else {
+		int ratio = ((((float)out_max - (float)out_min) / ((float)in_max - (float)in_min))*FACTOR);
+		return (((x - in_min) * (ratio))/FACTOR) + out_min;
+	}
 }
+
+int16_t mapCurve(int16_t x, int16_t in_min, int16_t in_max, int16_t out_min, int16_t out_max, int16_t axisZero, float curve)
+{
+	int16_t midRange = (in_min+in_max)/2;
+	float relativePos = (float)(x - axisZero)/(float)midRange;
+	float curveFactor = pow(abs(relativePos),curve)*pow(curve,2);
+	if (relativePos < 0) {
+		curveFactor *= -1;
+	}
+	int16_t computedVal = ((double)(midRange*curveFactor)+midRange);
+	int16_t retVal = mapLargeNumbers(computedVal,in_min,in_max,out_min,out_max);
+	return retVal;
+}
+
 
 uint16_t readSPIADC(){
-		PORTB &= ~(1<<PB6); // Pull shift register CS low
-		SPI_SendByte(0x01); //send start
-		uint16_t result = mapLargeNumbers((((uint16_t)(SPI_TransferByte(0xa0) & ~(0xF0)) << 8) | ((uint16_t)SPI_ReceiveByte())),350,3600,0,4095);
-		PORTB |= (1<<PB6); // Pull Shift register CS high
-		return result;
-}
-uint8_t ReadMinistick(uint8_t adcChannel,bool invert_axis) {
-	if (invert_axis) {
-		return  ~(map(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC),250,850,0,255));
-	} else {
-		return  map(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC),250,850,0,255);
-	};
-}
-uint16_t ReadAxis(uint8_t adcChannel,bool invert_axis) {
-	if (invert_axis) {
-		return  ~(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC));
-		} else {
-		return  ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC);
-	};
+	PORTB &= ~(1<<PB6); // Pull shift register CS low
+	SPI_SendByte(0x01); //send start
+	uint16_t result = mapLargeNumbers((((uint16_t)(SPI_TransferByte(0xa0) & ~(0xF0)) << 8) | ((uint16_t)SPI_ReceiveByte())),THROTTLE_MIN,THROTTLE_MAX,0,4095);
+	PORTB |= (1<<PB6); // Pull Shift register CS high
+	return result;
 }
 
+uint16_t ReadMinistickZero(uint8_t adcChannel,bool invert_axis) {
+	return ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC);
+}
+
+uint8_t ReadMinistick(uint8_t adcChannel,bool invert_axis,uint16_t axisZero,float curve) {
+	//uint8_t retVal =  map(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC),MICROSTICK_MIN,MICROSTICK_MAX,0,255);
+	//uint8_t retVal = mapCurve(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC),MICROSTICK_MIN,MICROSTICK_MAX,0,255,axisZero,curve);
+	if (invert_axis) {
+		return  ~(mapLargeNumbers(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC),MICROSTICK_MIN,MICROSTICK_MAX,0,255));
+		} else {
+		return mapLargeNumbers(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC),MICROSTICK_MIN,MICROSTICK_MAX,0,255);
+	}
+}
+
+uint16_t ReadAxis(uint8_t adcChannel,bool invert_axis) {
+	uint16_t retVal = ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC);
+	if (invert_axis) {
+		return  ~(retVal);
+		} else {
+		return  retVal;
+	};
+}
 
 #ifdef COUGAR_OLD
-	#define X_PIN 4
-	#define Y_PIN 5
-	#define ANT_PIN 6
-	#define RNG_PIN 7
+#define X_PIN 4
+#define Y_PIN 5
+#define ANT_PIN 6
+#define RNG_PIN 7
 #else
-	#define X_PIN 7
-	#define Y_PIN 6
-	#define ANT_PIN 4
-	#define RNG_PIN 5
+#define X_PIN 7
+#define Y_PIN 6
+#define ANT_PIN 4
+#define RNG_PIN 5
 #endif
-#define DEADZONE 15
-#define ReadX ReadMinistick(X_PIN,1)
-#define ReadY ReadMinistick(Y_PIN,0)
+
+#define ReadX ReadMinistick(X_PIN,1,MicrostickZero.X,CURVE)
+#define ReadY ReadMinistick(Y_PIN,0,MicrostickZero.Y,CURVE)
+#define ReadXzero ReadMinistickZero(X_PIN,1)
+#define ReadYzero ReadMinistickZero(Y_PIN,0)
 #define ReadANT ReadAxis(ANT_PIN,0)
 #define ReadRNG ReadAxis(RNG_PIN,0)
-Microstick_Report_Data_t MicrostickZero = {0};
+Microstick_Report_Data_Raw_t MicrostickZero = {0};
 Axis_Report_Data_t AxisLastRun = {0};
 Microstick_Report_Data_t MicrostickHistory[3] = {0};
 
 void ReadMicrostickZero() {
-	MicrostickZero.X = (ReadX+ReadX)/2;
-	MicrostickZero.Y = (ReadY+ReadY)/2;
-}	
-	
+	MicrostickZero.X = (uint32_t)(ReadXzero+ReadXzero+ReadXzero)/3;
+	MicrostickZero.Y = (uint32_t)(ReadYzero+ReadYzero+ReadYzero)/3;
+}
+
 /** Main program entry point. This routine contains the overall program flow, including initial
 *  setup of all components and the main program loop.
 */
@@ -277,18 +321,12 @@ uint16_t* const ReportSize)
 	// Sensing Pins 6(PD7), 7(PE6), 8(PB4) ,9(PB5)
 	
 	// I needed to put a delay after each active pin changes state. to avoid delay, I've put the ADC poll for all 4 axis as the delay
-	
-    uint16_t buttonbuffer = 0;
 
+	// Poll Buttons
+	uint16_t buttonbuffer = 0;
+
+	DDRD |= (1<<DDD4); //Set to output
 	PORTD &= ~(1 << PD4); // pull "pin 4" down
-	JoystickReport->X = (((ReadX*4)+(MicrostickHistory[0].X*3)+(MicrostickHistory[1].X*2)+MicrostickHistory[2].X)/10); // run ADC conversion as delay, do average in 3:1 ratio to reduce jitter
-	//if (abs(JoystickReport->X - ((AxisLastRun[0].X+AxisLastRun[1].X)/2)) < 4) {
-		//JoystickReport->X = AxisLastRun[0].X;
-	//}
-	if (abs((int32_t)JoystickReport->X-(int32_t)MicrostickZero.X) < DEADZONE)
-	{
-		JoystickReport->X = MicrostickZero.X;
-	}
 	// T6
 	if ((PIND & _BV(7))) {
 		buttonbuffer &= ~(1 << 6);
@@ -301,15 +339,19 @@ uint16_t* const ReportSize)
 		} else {
 		buttonbuffer |= (1 << 1);
 	}
-	PORTD |= (1 << PD4); // bring "pin 4" back up
+	DDRD &= ~(1<<DDD4); // set port to Hi-Z
+	PORTD &= ~(1 << PD4);  // make sure you are Hi-Z and not pullup
 
+	// Poll Microstick
+	JoystickReport->X = ((int32_t)((ReadX*4)+(MicrostickHistory[0].X*3)+(MicrostickHistory[1].X*2)+MicrostickHistory[2].X)/10); // run ADC conversion as delay, do average in 3:1 ratio to reduce jitter
+	//if (abs((int32_t)JoystickReport->X-(int32_t)MicrostickZero.X) < DEADZONE)
+	//{
+	//JoystickReport->X = MicrostickZero.X;
+	//}
+	
 	// poll toggles	T2-5
+	DDRD |= (1<<DDD1); //Set "pin 3" to output
 	PORTD &= ~(1 << PD1); // pull "pin 3" down
-	JoystickReport->Y =  (((ReadY*4)+(MicrostickHistory[0].Y*3)+(MicrostickHistory[1].Y*2)+MicrostickHistory[2].Y)/10); // run ADC conversion as delay, do average in 3:1 ratio to reduce jitter
-	if (abs((int32_t)JoystickReport->Y-(int32_t)MicrostickZero.Y) < DEADZONE)
-	{
-		JoystickReport->Y = MicrostickZero.Y;
-	}
 	//T2
 	if ((PIND & _BV(7))) {
 		buttonbuffer &= ~(1 << 2);
@@ -334,10 +376,19 @@ uint16_t* const ReportSize)
 		} else {
 		buttonbuffer |= (1 << 5);
 	}
-	PORTD |= (1 << PD1); // bring "pin 3" back up
-	//Serial.println(buttons, BIN);
+	DDRD &= ~(1<<DDD1); // set "pin 3" to Hi-Z
+	PORTD &= ~(1 << PD1);  // make sure you are Hi-Z and not pullup
+	
+	JoystickReport->Y =  ((int32_t)((ReadY*4)+(MicrostickHistory[0].Y*3)+(MicrostickHistory[1].Y*2)+MicrostickHistory[2].Y)/10); // run ADC conversion as delay, do average in 3:1 ratio to reduce jitter
+	//if (abs((int32_t)JoystickReport->Y-(int32_t)MicrostickZero.Y) < DEADZONE)
+	//{
+	//JoystickReport->Y = MicrostickZero.Y;
+	//}
+	
+	
 	// poll toggles	T7-10
-	PORTD &= ~(1 << PD0); // pull "pin 3" down
+	DDRD |= (1<<DDD0); //Set "pin 2" to output
+	PORTD &= ~(1 << PD0); // pull "pin 2" down
 	JoystickReport->RNG = (((ReadRNG*2)+AxisLastRun.RNG)/3); // run ADC conversion as delay
 	//T7
 	if ((PIND & _BV(7))) {
@@ -363,12 +414,15 @@ uint16_t* const ReportSize)
 		} else {
 		buttonbuffer |= (1 << 10);
 	}
-	PORTD |= (1 << PD0); // bring "pin 3" back up
+	DDRD &= ~(1<<DDD0); // set "pin 3" to Hi-Z
+	PORTD &= ~(1 << PD0);  // make sure you are Hi-Z and not pullup
 
+	// Poll rotaries
 	JoystickReport->ANT = (((ReadANT*2)+AxisLastRun.ANT)/3); // run ADC conversion as delay
 	JoystickReport->Buttons = (buttonbuffer >> 1);
 	// Get Throttle via SPI and average to help reduce jitter
 	//JoystickReport->Z = ((JoystickReport->Z + readSPIADC())/2);
+
 	// Set past vars
 	MicrostickHistory[2]=MicrostickHistory[1];
 	MicrostickHistory[1]=MicrostickHistory[0];
