@@ -26,19 +26,18 @@ struct Microstick {
 tqs throttle = {0};
 Microstick microstick_zero = {0};
 
-int16_t map(int16_t x, int16_t in_min, int16_t in_max, int16_t out_min, int16_t out_max)
+int32_t map_uri(int32_t InVal, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max)
 {
   // check limits to avoid out of bound results
-  if (x < in_min) {
+  if (InVal <= in_min) {
     return out_min;
-  } else if (x > in_max) {
+    } else if (InVal >= in_max) {
     return out_max;
-  } else {
+    } else {
     // if input checks out, do the math
-    return (int32_t)((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
+    return (InVal - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
   }
 }
-
 int32_t mapLargeNumbers(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max)
 {     
   #define FACTOR 10000
@@ -51,19 +50,30 @@ int32_t mapLargeNumbers(int32_t x, int32_t in_min, int32_t in_max, int32_t out_m
   return (((x - in_min) * (ratio))/FACTOR) + out_min;
   }
 }
-
-int16_t mapCurve(int16_t x, int16_t in_min, int16_t in_max, int16_t out_min, int16_t out_max, int16_t axisZero, float curve)
-{  
+  
+int32_t mapCurve(int32_t inVal, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max, int16_t axisZero, uint8_t sensetivity)
+{
+  /* Curve no 4 based on this source
+  * https://github.com/achilleas-k/fs2open.github.com/blob/joystick_curves/joy_curve_notes/new_curves.md
+  * 0 is mosed curved, 9 is linear
+  */
+  #define DEADZONE 15
   int16_t midRange = (in_min+in_max)/2;
-  float relativePos = (float)(x - axisZero)/(float)midRange;
-  float curveFactor = pow(abs(relativePos),curve)*pow(curve,2);
+  if (abs(inVal-axisZero) < DEADZONE) {
+    inVal = axisZero;
+  }
+  double relativePos = ((double)(inVal - axisZero)/midRange)*2;
+  float curveFactor = pow(abs(relativePos),(3-(sensetivity/4.5)));
+//    float curveFactor = pow(abs(relativePos),sensetivity/9) * pow(((1-cos(abs(relativePos)*PI))/2),((9-sensetivity)/4.5));
+    
   if (relativePos < 0) {
     curveFactor *= -1;
   }
-  int16_t computedVal = ((double)(midRange*curveFactor)+midRange);
-  int16_t retVal = mapLargeNumbers(computedVal,in_min,in_max,out_min,out_max);
+  int32_t computedVal = (midRange*curveFactor)+midRange;
+  int32_t retVal = map_uri(computedVal,in_min,in_max,out_min,out_max);
+
         Serial.print("mapCurve: ");
-    Serial.print(x);
+    Serial.print(inVal);
     Serial.print("|");
     Serial.print(axisZero); 
     Serial.print("|");
@@ -75,6 +85,7 @@ int16_t mapCurve(int16_t x, int16_t in_min, int16_t in_max, int16_t out_min, int
     Serial.println("");
   return retVal;
 }
+
 
 
 
@@ -241,8 +252,8 @@ void loop() {
   int x = READ_X;
   int y = READ_Y;
 //
-  throttle.X = mapCurve(x,250,850,0,255,microstick_zero.X,3);
-  throttle.Y = mapCurve(y,250,850,0,255,microstick_zero.X,3);
+  throttle.X = mapCurve(READ_X,250,850,0,255,microstick_zero.X,9);
+  throttle.Y = mapCurve(READ_Y,250,850,0,255,microstick_zero.Y,3);
 //
   if (x > xmax) {
     xmax = x;
@@ -271,7 +282,7 @@ void loop() {
 //
     Serial.print(" | ministick: ");
     Serial.print(throttle.X);
-//        Serial.print(x);
+////        Serial.print(x);
     Serial.print(',');
     Serial.print(throttle.Y);
 //    Serial.print(y);
@@ -280,15 +291,15 @@ void loop() {
 ////    Serial.print(xmax);
 ////    Serial.print(",X min: ");
 ////    Serial.print(xmin);
-  Serial.print(" | Microstick_zero: ");
-  Serial.print(microstick_zero.X);
-  Serial.print(",");
-  Serial.print(microstick_zero.Y);
-//////  //
-    Serial.print(" | axis: ");
-    Serial.print(throttle.RNG);
-    Serial.print(',');
-    Serial.print(throttle.ANT);
+//  Serial.print(" | Microstick_zero: ");
+//  Serial.print(microstick_zero.X);
+//  Serial.print(",");
+//  Serial.print(microstick_zero.Y);
+////////  //
+//    Serial.print(" | axis: ");
+//    Serial.print(throttle.RNG);
+//    Serial.print(',');
+//    Serial.print(throttle.ANT);
 //  //
 //    Serial.print(" | buttons: ");
 //    Serial.print(throttle.Buttons, BIN);
@@ -296,7 +307,7 @@ void loop() {
 
 Serial.println("");
 
-delay(500);
+delay(250);
     
 
 }
