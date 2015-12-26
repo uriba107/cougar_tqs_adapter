@@ -147,7 +147,6 @@ int32_t mapCurve(int32_t inVal, int32_t in_min, int32_t in_max, int32_t out_min,
 		float relativePos = (inVal - axisZero)/(float)axisZero;
 		float curveFactor = pow(fabsf(relativePos),(3-(sensetivity/4.5)));
 		//float curveFactor = pow(fabsf(relativePos),(sensetivity/9))*pow((1-cos(relativePos*PI))/2,(9-sensetivity)/4.5);
-		
 		if (relativePos < 0) {
 			curveFactor *= -1;
 		}
