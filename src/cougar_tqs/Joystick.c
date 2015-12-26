@@ -145,7 +145,7 @@ int32_t mapCurve(int32_t inVal, int32_t in_min, int32_t in_max, int32_t out_min,
 	}
 	if (sensetivity <10) {
 		// make a curve with sensetivity (WIP)
-		double relativePos = ((double)(inVal - axisZero)/midRange)*2;
+		float relativePos = (inVal - axisZero)/(float)midRange;
 		float curveFactor = pow(abs(relativePos),(3-(sensetivity/4.5)));
 		if (relativePos < 0) {
 			curveFactor *= -1;
