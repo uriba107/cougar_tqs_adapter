@@ -14,7 +14,7 @@ for more details on the build process:
 http://pits.108vfs.org/uriba/standalone-cougar-tqs-part-i/
 
 ##### Software
-Source code provided can compiled and opened using Atmel Studio 6.2.
+Source code provided can compiled and opened using Atmel Studio 7.
 for more details check out the relevent blog posts:
 http://pits.108vfs.org/uriba/standalone-cougar-tqs-part-ii/
 http://pits.108vfs.org/uriba/standalone-cougar-tqs-part-iii/
