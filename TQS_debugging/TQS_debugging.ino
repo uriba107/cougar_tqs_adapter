@@ -1,5 +1,7 @@
 #include <SPI.h>
 
+#define DEADZONE 15
+
 #define AXIS_X 3
 #define AXIS_Y 2
 #define AXIS_ANT 0
@@ -19,8 +21,8 @@ struct tqs {
 };
 
 struct Microstick {
-    int16_t X;
-    int16_t Y;
+  int16_t X;
+  int16_t Y;
 };
 
 tqs throttle = {0};
@@ -31,58 +33,62 @@ int32_t map_uri(int32_t InVal, int32_t in_min, int32_t in_max, int32_t out_min, 
   // check limits to avoid out of bound results
   if (InVal <= in_min) {
     return out_min;
-    } else if (InVal >= in_max) {
+  } else if (InVal >= in_max) {
     return out_max;
-    } else {
+  } else {
     // if input checks out, do the math
     return (InVal - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
   }
 }
 int32_t mapLargeNumbers(int32_t x, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max)
-{     
-  #define FACTOR 10000
-    if (x < in_min) {
+{
+#define FACTOR 10000
+  if (x < in_min) {
     return out_min;
   } else if (x > in_max) {
     return out_max;
   } else {
-  int ratio = ((((float)out_max - (float)out_min) / ((float)in_max - (float)in_min))*FACTOR);
-  return (((x - in_min) * (ratio))/FACTOR) + out_min;
+    int ratio = ((((float)out_max - (float)out_min) / ((float)in_max - (float)in_min)) * FACTOR);
+    return (((x - in_min) * (ratio)) / FACTOR) + out_min;
   }
 }
-  
+
 int32_t mapCurve(int32_t inVal, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max, int16_t axisZero, uint8_t sensetivity)
 {
   /* Curve no 4 based on this source
   * https://github.com/achilleas-k/fs2open.github.com/blob/joystick_curves/joy_curve_notes/new_curves.md
-  * 0 is mosed curved, 9 is linear
+  * 0 is most curved, 9 is linear, 10 will disable curve skip curve logic (linear output)
   */
-  #define DEADZONE 15
-  int16_t midRange = (in_min+in_max)/2;
-  if (abs(inVal-axisZero) < DEADZONE) {
+  int32_t retVal;
+  int16_t midRange = (in_min + in_max) / 2;
+  if (abs(inVal - axisZero) < DEADZONE) {
     inVal = axisZero;
-  }
-  double relativePos = ((double)(inVal - axisZero)/midRange)*2;
-  float curveFactor = pow(abs(relativePos),(3-(sensetivity/4.5)));
-//    float curveFactor = pow(abs(relativePos),sensetivity/9) * pow(((1-cos(abs(relativePos)*PI))/2),((9-sensetivity)/4.5));
-    
-  if (relativePos < 0) {
-    curveFactor *= -1;
-  }
-  int32_t computedVal = (midRange*curveFactor)+midRange;
-  int32_t retVal = map_uri(computedVal,in_min,in_max,out_min,out_max);
 
-        Serial.print("mapCurve: ");
-    Serial.print(inVal);
-    Serial.print("|");
-    Serial.print(axisZero); 
+  }
+  Serial.print("mapCurve: ");
+  Serial.print(inVal);
+  Serial.print("|");
+  Serial.print(axisZero);
+  if (sensetivity < 10) {
+    // make a curve with sensetivity (WIP)
+    float relativePos = (inVal - axisZero) / (float)axisZero;
+    float curveFactor = pow(abs(relativePos), (3 - (sensetivity / 4.5)));
+    if (relativePos < 0) {
+      curveFactor *= -1;
+    }
     Serial.print("|");
     Serial.print(relativePos);
     Serial.print("|");
-    Serial.print(computedVal);
-    Serial.print("|");
-    Serial.print(retVal);
-    Serial.println("");
+    Serial.print((midRange * curveFactor) + midRange);
+    retVal = map_uri(((midRange * curveFactor) + midRange), in_min, in_max, out_min, out_max);
+  } else {
+    // Skip the curve, and give linear output
+    int16_t delta = midRange - axisZero;
+    retVal =  map_uri(inVal + delta, in_min, in_max, out_min, out_max);
+  }
+  Serial.print("|");
+  Serial.print(retVal);
+  Serial.println("");
   return retVal;
 }
 
@@ -90,17 +96,17 @@ int32_t mapCurve(int32_t inVal, int32_t in_min, int32_t in_max, int32_t out_min,
 
 
 void GetMicrostickZero() {
-//    uint32_t x = (analogRead(3)+analogRead(3)+analogRead(3))/3;
-//    uint32_t y = (analogRead(2)+analogRead(2)+analogRead(2))/3;
-//
-////
-//  microstick_zero.X = map(x,250,850,-127,128);
-//  microstick_zero.Y = map(y,250,850,-127,128);
+  //    uint32_t x = (analogRead(3)+analogRead(3)+analogRead(3))/3;
+  //    uint32_t y = (analogRead(2)+analogRead(2)+analogRead(2))/3;
+  //
+  ////
+  //  microstick_zero.X = map(x,250,850,-127,128);
+  //  microstick_zero.Y = map(y,250,850,-127,128);
 
-//  microstick_zero.X = map((READ_X+READ_X+READ_X)/3,250,850,-127,128);
-//  microstick_zero.Y = map((READ_Y+READ_Y+READ_Y)/3,250,850,-127,128);
-  microstick_zero.X = (uint32_t)(READ_X+READ_X+READ_X)/3;
-  microstick_zero.Y = (uint32_t)(READ_Y+READ_Y+READ_Y)/3;  
+  //  microstick_zero.X = map((READ_X+READ_X+READ_X)/3,250,850,-127,128);
+  //  microstick_zero.Y = map((READ_Y+READ_Y+READ_Y)/3,250,850,-127,128);
+  microstick_zero.X = (uint32_t)(READ_X + READ_X + READ_X) / 3;
+  microstick_zero.Y = (uint32_t)(READ_Y + READ_Y + READ_Y) / 3;
 
 }
 
@@ -127,7 +133,7 @@ uint16_t pullMatrix(void) {
   // poll toggles	T2-5
   PORTD &= ~(1 << PD1); // pull "pin 3" down
   delay(1);
-//T2
+  //T2
   if ((PIND & _BV(7))) {
     buttons &= ~(1 << 2);
   } else {
@@ -139,14 +145,14 @@ uint16_t pullMatrix(void) {
   } else {
     buttons |= (1 << 3);
   }
-//T4
+  //T4
   if ((PINB & _BV(4))) {
     buttons &= ~(1 << 4);
   } else {
     buttons |= (1 << 4);
   }
   // T5
-  if (PINB&_BV(5)) {
+  if (PINB & _BV(5)) {
     buttons &= ~(1 << 5);
   } else {
     buttons |= (1 << 5);
@@ -157,7 +163,7 @@ uint16_t pullMatrix(void) {
   PORTD &= ~(1 << PD0); // pull "pin 3" down
   delay(1);
 
-//T7
+  //T7
   if ((PIND & _BV(7))) {
     buttons &= ~(1 << 7);
   } else {
@@ -169,14 +175,14 @@ uint16_t pullMatrix(void) {
   } else {
     buttons |= (1 << 8);
   }
-//T9
+  //T9
   if ((PINB & _BV(4))) {
     buttons &= ~(1 << 9);
   } else {
     buttons |= (1 << 9);
   }
   // T10
-  if (PINB&_BV(5)) {
+  if (PINB & _BV(5)) {
     buttons &= ~(1 << 10);
   } else {
     buttons |= (1 << 10);
@@ -201,7 +207,7 @@ uint16_t Readthrottle(void) {
   SPI.transfer(0x01);
   buff = ((uint16_t)((SPI.transfer(0xa0) & ~(0xF0)) << 8)) | ((uint16_t)SPI.transfer(0));
   digitalWrite(10, HIGH);
-  return mapLargeNumbers(buff,400,3650,0,4095);
+  return mapLargeNumbers(buff, 400, 3650, 0, 4095);
 }
 
 void setup() {
@@ -224,7 +230,7 @@ void setup() {
   SPI.setClockDivider(SPI_CLOCK_DIV8);
   Serial.begin(9600);
   Serial.println("Start");
-  
+
   GetMicrostickZero();
 }
 
@@ -233,11 +239,11 @@ uint16_t throttlemax = 0;
 uint16_t throttlemin = 4096;
 int xmin = 1023;
 int xmax = 0;
-int ymin =1023;
-int ymax =0;
+int ymin = 1023;
+int ymax = 0;
 void loop() {
   // Get throttle - 0 for now
- 
+
   throttle.Z = Readthrottle();
   if (throttle.Z > throttlemax) {
     throttlemax = throttle.Z;
@@ -249,66 +255,66 @@ void loop() {
   // Get Axis data
   throttle.RNG = READ_RNG;
   throttle.ANT = READ_ANT;
-  int x = READ_X;
-  int y = READ_Y;
+//  int x = READ_X;
+//  int y = READ_Y;
+  //
+  throttle.X = mapCurve(READ_X, 280, 830, 0, 255, microstick_zero.X, 5);
+  throttle.Y = mapCurve(READ_Y, 280, 830, 0, 255, microstick_zero.Y, 5);
+  //
+//  if (x > xmax) {
+//    xmax = x;
+//  }
+//  if (x < xmin) {
+//    xmin = x;
+//  }
 //
-  throttle.X = mapCurve(READ_X,250,850,0,255,microstick_zero.X,9);
-  throttle.Y = mapCurve(READ_Y,250,850,0,255,microstick_zero.Y,3);
-//
-  if (x > xmax) {
-    xmax = x;
-  }
-  if (x < xmin) {
-    xmin = x;
-  }
-
-  if (y > ymax) {
-    ymax = y;
-  }
-  if (y < ymin) {
-    ymin = y;
-  }
+//  if (y > ymax) {
+//    ymax = y;
+//  }
+//  if (y < ymin) {
+//    ymin = y;
+//  }
   // Get buttons
 
   throttle.Buttons = pullMatrix();
 
   /// Print stuff
-//    Serial.print(" | Throttle: ");
-//    Serial.print(throttle.Z);
-////    Serial.print(",Throttle max: ");
-////    Serial.print(throttlemax);
-////    Serial.print(",Throttle min: ");
-////    Serial.print(throttlemin);
-//
-    Serial.print(" | ministick: ");
-    Serial.print(throttle.X);
-////        Serial.print(x);
-    Serial.print(',');
-    Serial.print(throttle.Y);
-//    Serial.print(y);
+  //    Serial.print(" | Throttle: ");
+  //    Serial.print(throttle.Z);
+  ////    Serial.print(",Throttle max: ");
+  ////    Serial.print(throttlemax);
+  ////    Serial.print(",Throttle min: ");
+  ////    Serial.print(throttlemin);
+  //
+  Serial.print(" | ministick: ");
+  Serial.print(throttle.X);
+  ////        Serial.print(x);
+  Serial.print(',');
+  Serial.print(throttle.Y);
+  //    Serial.print(y);
 
-////    Serial.print(",X max: ");
-////    Serial.print(xmax);
-////    Serial.print(",X min: ");
-////    Serial.print(xmin);
-//  Serial.print(" | Microstick_zero: ");
-//  Serial.print(microstick_zero.X);
-//  Serial.print(",");
-//  Serial.print(microstick_zero.Y);
-////////  //
-//    Serial.print(" | axis: ");
-//    Serial.print(throttle.RNG);
-//    Serial.print(',');
-//    Serial.print(throttle.ANT);
-//  //
-//    Serial.print(" | buttons: ");
-//    Serial.print(throttle.Buttons, BIN);
+  ////    Serial.print(",X max: ");
+  ////    Serial.print(xmax);
+  ////    Serial.print(",X min: ");
+  ////    Serial.print(xmin);
+  //  Serial.print(" | Microstick_zero: ");
+  //  Serial.print(microstick_zero.X);
+  //  Serial.print(",");
+  //  Serial.print(microstick_zero.Y);
+  ////////  //
+  //    Serial.print(" | axis: ");
+  //    Serial.print(throttle.RNG);
+  //    Serial.print(',');
+  //    Serial.print(throttle.ANT);
+  //  //
+  //    Serial.print(" | buttons: ");
+  //    Serial.print(throttle.Buttons, BIN);
 
 
-Serial.println("");
+  Serial.println("");
 
-delay(250);
-    
+  delay(200);
+
 
 }
 

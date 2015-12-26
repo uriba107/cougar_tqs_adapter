@@ -36,10 +36,10 @@ this software.
 #define COUGAR_OLD
 #define USE_TM_VID
 
-#define DEADZONE 25
-#define SENSETIVITY 10
-#define MICROSTICK_MIN 250
-#define MICROSTICK_MAX 850
+#define DEADZONE 35
+#define SENSETIVITY 5
+#define MICROSTICK_MIN 300
+#define MICROSTICK_MAX 800
 #define THROTTLE_MIN 350
 #define THROTTLE_MAX 3600
 
@@ -104,7 +104,6 @@ void SetupPins(void)
 	DDRB &= ~(1<<PB5);
 }
 
-
 int32_t map(int32_t InVal, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max)
 {
 	// check limits to avoid out of bound results
@@ -131,13 +130,13 @@ int32_t mapLargeNumbers(int32_t inVal, int32_t in_min, int32_t in_max, int32_t o
 	}
 }
 
-int32_t mapCurve(int32_t inVal, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max, int16_t axisZero, uint8_t sensetivity)
+int32_t mapCurve(int32_t inVal, int32_t in_min, int32_t in_max, int32_t out_min, int32_t out_max, uint16_t axisZero, uint8_t sensetivity)
 {
 	/* Curve no 4 based on this source
 	* https://github.com/achilleas-k/fs2open.github.com/blob/joystick_curves/joy_curve_notes/new_curves.md
 	* 0 is most curved, 9 is linear, 10 will disable curve skip curve logic (linear output)
 	*/
-
+	#define PI (3.141592653589793)
 	int16_t midRange = (in_min+in_max)/2;
 	if (abs(inVal-axisZero) < DEADZONE) {
 		inVal = axisZero;
@@ -145,12 +144,14 @@ int32_t mapCurve(int32_t inVal, int32_t in_min, int32_t in_max, int32_t out_min,
 	}
 	if (sensetivity <10) {
 		// make a curve with sensetivity (WIP)
-		double relativePos = ((double)(inVal - axisZero)/midRange)*2;
-		float curveFactor = pow(abs(relativePos),(3-(sensetivity/4.5)));
+		float relativePos = (inVal - axisZero)/(float)axisZero;
+		float curveFactor = pow(fabsf(relativePos),(3-(sensetivity/4.5)));
+		//float curveFactor = pow(fabsf(relativePos),(sensetivity/9))*pow((1-cos(relativePos*PI))/2,(9-sensetivity)/4.5);
+		
 		if (relativePos < 0) {
 			curveFactor *= -1;
 		}
-		return map((int32_t)((midRange*curveFactor)+midRange),in_min,in_max,out_min,out_max);
+		return map(((midRange*curveFactor)+midRange),in_min,in_max,out_min,out_max);
 		} else {
 		// Skip the curve, and give linear output
 		int16_t delta = midRange-axisZero;
@@ -170,7 +171,7 @@ uint16_t ReadMinistickZero(uint8_t adcChannel) {
 	return ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED | ADC_REFERENCE_AVCC);
 }
 
-uint8_t ReadMinistick(uint8_t adcChannel,bool invert_axis,int16_t axisZero,uint8_t sensetivity) {
+uint8_t ReadMinistick(uint8_t adcChannel,bool invert_axis,uint16_t axisZero,uint8_t sensetivity) {
 	if (invert_axis) {
 		return  ~(mapCurve(ADC_GetChannelReading(adcChannel|ADC_RIGHT_ADJUSTED|ADC_REFERENCE_AVCC),MICROSTICK_MIN,MICROSTICK_MAX,0,255,axisZero,sensetivity));
 		} else {
