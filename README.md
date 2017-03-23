@@ -1,7 +1,10 @@
 ## TM cougar TQS USB adapter 
 This is a DIY USB adapter to make your TM Cougar throttle work as a standalone USB device.
 
-**This software is distributed under LUFA modified MIT license, and is provided as is and without any warranty what so ever. Further information can be found in "license.txt"**
+**This software is based on the LUFA framework and distributed under MIT license as it stated in the [LUFA license](http://www.fourwalledcubicle.com/files/LUFA/Doc/120730/html/_page__license_info.html), Original license is provided here un modified in the file "license.txt".**
+
+**Hardware is also distributed under MIT license, as specified under the "LICENSE_HW.md" file in this repo.**
+
 
 http://pits.108vfs.org
 
