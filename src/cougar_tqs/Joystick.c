@@ -34,7 +34,7 @@ this software.
 *  the demo and is responsible for the initial application hardware configuration.
 */
 #define COUGAR_OLD
-#define USE_TM_VID
+
 
 #define DEADZONE 35
 #define SENSETIVITY 5
@@ -125,7 +125,7 @@ int32_t mapLargeNumbers(int32_t inVal, int32_t in_min, int32_t in_max, int32_t o
 		} else if (inVal >= in_max) {
 		return out_max;
 		} else {
-		int ratio = ((((float)out_max - (float)out_min) / ((float)in_max - (float)in_min))*FACTOR);
+		int32_t ratio = ((((float)out_max - (float)out_min) / ((float)in_max - (float)in_min))*FACTOR);
 		return (((inVal - in_min) * (ratio))/FACTOR) + out_min;
 	}
 }
