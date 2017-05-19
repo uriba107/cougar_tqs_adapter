@@ -404,7 +404,13 @@ void ReadTqs(TQS_t* TqsReport)
 	TqsReport->RNG = MapRoteries(Roteries.X,gDetents.X);
 	TqsReport->ANT = MapRoteries(Roteries.Y,gDetents.Y);
 
-	TqsReport->Buttons = (buttonbuffer >> 1);
+	buttonbuffer = (buttonbuffer >> 1);
+	if ((buttonbuffer & AllButtons) == AllButtons) {
+	TqsReport->Buttons = 0;
+	} else {
+	TqsReport->Buttons = buttonbuffer;
+	}
+	
 
 	//LastRun.X = TqsReport->X;
 	//LastRun.Y = TqsReport->Y;
@@ -444,7 +450,7 @@ void ConfigDetection(uint16_t Buttons){
 		}
 		} else { // if we are not in config mode
 		if (gConfigTimer == 0) {
-			if (Buttons & ConfigMode) {
+			if ((Buttons & ConfigMode) == ConfigMode) {
 //			if ((Buttons & SbOpen) && (Buttons & Uncage)) {
 				gConfigTimer = millis();
 			}
@@ -453,7 +459,7 @@ void ConfigDetection(uint16_t Buttons){
 			gConfigTimer = millis();
 			} else {
 	//		if (!(Buttons & SbOpen) && !(Buttons & Uncage)) {
-			if (!(Buttons & ConfigMode)) {
+			if ((Buttons & ConfigMode) != ConfigMode) {
 
 				gConfigTimer = 0;
 			}
@@ -464,14 +470,14 @@ void ConfigDetection(uint16_t Buttons){
 void CheckBootTimer(uint16_t Buttons) {
 	if (gRebootTimer == 0) {
 //		if ((Buttons & SbOpen) && (Buttons & Uncage) && (Buttons & CursorEnable)) {
-		if (Buttons & BootLoader) {
+		if ((Buttons & BootLoader) == BootLoader) {
 			gRebootTimer = millis();
 		}
 		} else if (millis() - gRebootTimer >= 5000) {
 		RebootToBootloader();
 		} else {
 //		if (!(Buttons & SbOpen) && !(Buttons & Uncage) && !(Buttons & CursorEnable)) {
-		if (!(Buttons & BootLoader)) {
+		if ((Buttons & BootLoader) != BootLoader) {
 			gRebootTimer = 0;
 		}
 	}

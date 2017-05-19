@@ -166,13 +166,13 @@ bool GetNextReport(USB_JoystickReport_Data_t* const ReportData)
 
 	ConfigDetection(buffer.Buttons);
 
-	if ((gIsConfig) || (buffer.Buttons & AllButtons)){
+	if (gIsConfig){
 		ReportData->Buttons = 0;
 	} else {
 		ReportData->Buttons = buffer.Buttons;
 	}
 
-	CheckBootTimer(ReportData->Buttons);
+	CheckBootTimer(buffer.Buttons);
 
 
 	/* Return whether the new report is different to the previous report or not */
