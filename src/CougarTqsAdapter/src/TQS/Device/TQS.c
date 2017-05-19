@@ -444,14 +444,17 @@ void ConfigDetection(uint16_t Buttons){
 		}
 		} else { // if we are not in config mode
 		if (gConfigTimer == 0) {
-			if ((Buttons & SbOpen) && (Buttons & Uncage)) {
+			if (Buttons & ConfigMode) {
+//			if ((Buttons & SbOpen) && (Buttons & Uncage)) {
 				gConfigTimer = millis();
 			}
 			} else if (millis() - gConfigTimer >= 1500) {
 			gIsConfig = true;
 			gConfigTimer = millis();
 			} else {
-			if (!(Buttons & SbOpen) && !(Buttons & Uncage)) {
+	//		if (!(Buttons & SbOpen) && !(Buttons & Uncage)) {
+			if (!(Buttons & ConfigMode)) {
+
 				gConfigTimer = 0;
 			}
 		}
@@ -460,13 +463,15 @@ void ConfigDetection(uint16_t Buttons){
 
 void CheckBootTimer(uint16_t Buttons) {
 	if (gRebootTimer == 0) {
-		if ((Buttons & SbOpen) && (Buttons & Uncage) && (Buttons & CursorEnable)) {
+//		if ((Buttons & SbOpen) && (Buttons & Uncage) && (Buttons & CursorEnable)) {
+		if (Buttons & BootLoader) {
 			gRebootTimer = millis();
 		}
 		} else if (millis() - gRebootTimer >= 5000) {
 		RebootToBootloader();
 		} else {
-		if (!(Buttons & SbOpen) && !(Buttons & Uncage) && !(Buttons & CursorEnable)) {
+//		if (!(Buttons & SbOpen) && !(Buttons & Uncage) && !(Buttons & CursorEnable)) {
+		if (!(Buttons & BootLoader)) {
 			gRebootTimer = 0;
 		}
 	}

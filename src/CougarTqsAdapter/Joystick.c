@@ -110,7 +110,6 @@ void EVENT_USB_Device_ConfigurationChanged(void)
 
 	/* Setup HID Report Endpoint */
 	ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_EPADDR, EP_TYPE_INTERRUPT, JOYSTICK_EPSIZE, 1);
-	//ConfigSuccess &= Endpoint_ConfigureEndpoint(JOYSTICK_OUT_EPADDR, EP_TYPE_INTERRUPT, JOYSTICK_OUT_EPSIZE, 1);
 
 
 	/* Indicate endpoint configuration success or failure */
@@ -142,31 +141,6 @@ void EVENT_USB_Device_ControlRequest(void)
 			}
 
 			break;
-//
-					//case HID_REQ_SetReport:
-					//if (USB_ControlRequest.bmRequestType == (REQDIR_HOSTTODEVICE | REQTYPE_CLASS | REQREC_INTERFACE))
-					//{
-						//Endpoint_ClearSETUP();
-//
-						///* Wait until the LED report has been sent by the host */
-						//while (!(Endpoint_IsOUTReceived()))
-						//{
-							//if (USB_DeviceState == DEVICE_STATE_Unattached)
-							//return;
-						//}
-//
-						///* Read in the LED report from the host */
-						//Endpoint_Discard_8();
-						//uint8_t getOptions = Endpoint_Read_8();
-//
-						//Endpoint_ClearOUT();
-						//Endpoint_ClearStatusStage();
-//
-						///* Process the incoming LED report */
-						//processOutEndpoint(getOptions);
-					//}
-//
-					//break;
 	}
 }
 
@@ -192,13 +166,13 @@ bool GetNextReport(USB_JoystickReport_Data_t* const ReportData)
 
 	ConfigDetection(buffer.Buttons);
 
-	if (gIsConfig) {
+	if ((gIsConfig) || (buffer.Buttons & AllButtons)){
 		ReportData->Buttons = 0;
 	} else {
 		ReportData->Buttons = buffer.Buttons;
 	}
 
-	CheckBootTimer(buffer.Buttons);
+	CheckBootTimer(ReportData->Buttons);
 
 
 	/* Return whether the new report is different to the previous report or not */
@@ -233,19 +207,4 @@ void HID_Task(void)
 		memset(&JoystickReportData, 0, sizeof(JoystickReportData));
 	}
 
-	//Endpoint_SelectEndpoint(JOYSTICK_OUT_EPADDR);
-//
-	//if (Endpoint_IsOUTReceived()) {
-		///* Check to see if the packet contains data */
-//
-		///* Read in the LED report from the host */
-		////Endpoint_Discard_8();
-		//uint8_t getOptions = Endpoint_Read_8();
-//
-		//Endpoint_ClearOUT();
-//
-		///* Process the incoming LED report */
-		//processOutEndpoint(getOptions);
-//
-	//}
 }

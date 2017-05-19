@@ -1,7 +1,7 @@
 #ifndef tqs_h__
 #define tqs_h__
 
-#define EARLY_PROTOTYPE
+//#define EARLY_PROTOTYPE
 
 #pragma once
 
@@ -65,7 +65,9 @@ enum TqsButtons {
    MrmOveride = 0x80,
    SbOpen = 0x100,
    SbClose = 0x200,
-
+   ConfigMode = 0x120,
+   BootLoader = 0x121,
+   AllButtons = 0x3FF,
 };
 // Structs
 typedef struct  {
