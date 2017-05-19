@@ -5,6 +5,8 @@ This is a DIY USB adapter to make your TM Cougar throttle work as a standalone U
 
 **Hardware is also distributed under MIT license, as specified under the "LICENSE_HW.md" file in this repo.**
 
+**It is highly recommended that you flash or update the device with TQS connected. Without the throttle connected, there are a lot of floating connections which may result in weird behavior.**
+
 
 http://pits.108vfs.org
 
@@ -46,7 +48,7 @@ Available options:
 | IFF OUT | drop all current Min/Max values for microstick and throttle. <br> Then, while in config mode, update Min/Max Values (20 seconds or UHF is pushed) |
 
 an addition special mode is available to boot TQS controller to bootloader to allow device firmware to be updated.
-to enter boot loader press and hold the following buttons for 5 seconds: Uncage, Cursor Enable, Speedbreaks Open. 
+to enter boot loader press and hold the following buttons for 5 seconds: Uncage, Cursor Enable, Speedbreaks Open.
 ##### Debugging
 In the "*TQS_debugging*" folder, you will find an Arduino sketch to help you debug the hardware.
 it will sample the device in exactly the same way the actual code does, but outputs the data out via the Serial console.
