@@ -8,7 +8,7 @@
 
 
 // configure Global EEPROM pointers
-uint8_t EEMEM NonVolatileOptions;
+uint8_t EEMEM NonVolatileOptions; // Unused stuff. left here not to mess up the address allocation for data retrivals.
 
 uint16_t EEMEM NonVolatileThrottleMin;
 uint16_t EEMEM NonVolatileThrottleMax;
@@ -23,7 +23,6 @@ uint16_t EEMEM NonVolatileAntDetent;
 TqsLimits_t gTqsLimits;
 Microstick_Report_Data_Raw_t gDetents;
 
-//uint8_t gOptions;
 
 bool gIsConfig = false;
 bool gIsMinMaxing = false;
@@ -123,7 +122,6 @@ void WriteMem(void){
 	uint16_t volatile VolatileAntDetent;
 
 	// Read EEPROM
-	//VolatileOptions = eeprom_read_byte(&NonVolatileOptions);
 	VolatileThrottleMin = eeprom_read_word(&NonVolatileThrottleMin);
 	VolatileThrottleMax = eeprom_read_word(&NonVolatileThrottleMax);
 	VolatileMicrostickXMin = eeprom_read_word(&NonVolatileMicrostickXMin);
@@ -133,12 +131,7 @@ void WriteMem(void){
 	VolatileRngDetent = eeprom_read_word(&NonVolatileRngDetent);
 	VolatileAntDetent = eeprom_read_word(&NonVolatileAntDetent);
 
-	//gOptions &= ~(RebootDevice); // make sure reboot flag doesn't carry over
-	// Compare values and write back
-	//if (VolatileOptions != gOptions) {
-		//gOptions &= ~(RebootDevice); //make sure RebootFlag doesn't carry over
-		//eeprom_write_byte(&NonVolatileOptions, gOptions);
-	//}
+
 	if (gTqsLimits.Z.Min != VolatileThrottleMin) {
 		eeprom_write_word(&NonVolatileThrottleMin,gTqsLimits.Z.Min);
 	}
@@ -216,23 +209,16 @@ uint16_t readSPIADC(){
 
 Microstick_Report_Data_t mapMicrostick(Microstick_Report_Data_Raw_t* RawAxis) {
 	Microstick_Report_Data_t MappedAxis;
-	//MappedAxis.X = mapCurve(RawAxis->X-gTqsLimits.X.Center,gTqsLimits.X.Min-gTqsLimits.X.Center,gTqsLimits.X.Max-gTqsLimits.X.Center,OUTPUT_MIN_8BIT,OUTPUT_MAX_8BIT,SENSETIVITY);
-	//MappedAxis.Y = mapCurve(RawAxis->Y-gTqsLimits.Y.Center,gTqsLimits.Y.Min-gTqsLimits.Y.Center,gTqsLimits.Y.Max-gTqsLimits.Y.Center,OUTPUT_MIN_8BIT,OUTPUT_MAX_8BIT,SENSETIVITY);
-	//MappedAxis.X = SimpleMapCurve(RawAxis->X-gTqsLimits.X.Center,gTqsLimits.X.Min-gTqsLimits.X.Center,gTqsLimits.X.Max-gTqsLimits.X.Center,OUTPUT_MIN_8BIT,OUTPUT_MAX_8BIT);
-	//MappedAxis.Y = SimpleMapCurve(RawAxis->Y-gTqsLimits.Y.Center,gTqsLimits.Y.Min-gTqsLimits.Y.Center,gTqsLimits.Y.Max-gTqsLimits.Y.Center,OUTPUT_MIN_8BIT,OUTPUT_MAX_8BIT);
 	if (abs(RawAxis->X-gTqsLimits.X.Center) < 15) {
 		MappedAxis.X = 0;
 		} else {
-//		MappedAxis.X = map(RawAxis->X-gTqsLimits.X.Center,gTqsLimits.X.Min-gTqsLimits.X.Center,gTqsLimits.X.Max-gTqsLimits.X.Center,OUTPUT_MAX_8BIT,OUTPUT_MIN_8BIT);
 		MappedAxis.X = mapCurve(RawAxis->X-gTqsLimits.X.Center,gTqsLimits.X.Min-gTqsLimits.X.Center,gTqsLimits.X.Max-gTqsLimits.X.Center,OUTPUT_MAX_8BIT,OUTPUT_MIN_8BIT,SENSETIVITY);
 
 	}
 	if (abs(RawAxis->Y-gTqsLimits.Y.Center) < 15) {
 		MappedAxis.Y = 0;
 		} else {
-//		MappedAxis.Y = map(RawAxis->Y-gTqsLimits.Y.Center,gTqsLimits.Y.Min-gTqsLimits.Y.Center,gTqsLimits.Y.Max-gTqsLimits.Y.Center,OUTPUT_MIN_8BIT,OUTPUT_MAX_8BIT);
 		MappedAxis.Y = mapCurve(RawAxis->Y-gTqsLimits.Y.Center,gTqsLimits.Y.Min-gTqsLimits.Y.Center,gTqsLimits.Y.Max-gTqsLimits.Y.Center,OUTPUT_MIN_8BIT,OUTPUT_MAX_8BIT,SENSETIVITY);
-
 	}
 	return MappedAxis;
 }
@@ -276,35 +262,19 @@ int16_t MapRoteries(uint16_t RawData,uint16_t Detent) {
 
 void ReadTqs(TQS_t* TqsReport)
 {
-	//static TQS_t LastRun;
 	static Microstick_Report_Data_t MicrostickHistory[3];
 	static Microstick_Report_Data_t NewMicrostick;
 	static Microstick_Report_Data_Raw_t Roteries;
 	static uint16_t buttonbuffer;
-	// static Microstick_Report_Data_t MicrostickHistory[3];
+
 	NewMicrostick = ReadMicrostick();
-	//if (abs(NewMicrostick.X-DEADZONE) < DEADZONE) {
-	//NewMicrostick.X = 0;
-	//}
-	//if (abs(NewMicrostick.Y-DEADZONE) < DEADZONE) {
-	//NewMicrostick.Y = 0;
-	//}
+
 	MicrostickHistory[2] = MicrostickHistory[1];
 	MicrostickHistory[1] = MicrostickHistory[0];
 	MicrostickHistory[0] = NewMicrostick;
+
 	TqsReport->X = (((int32_t)MicrostickHistory[0].X*3)+((int32_t)MicrostickHistory[1].X*2)+((int32_t)MicrostickHistory[2].X))/6;
 	TqsReport->Y = (((int32_t)MicrostickHistory[0].Y*3)+((int32_t)MicrostickHistory[1].Y*2)+((int32_t)MicrostickHistory[2].Y))/6;
-
-	//if (gOptions & FlipMicrostick) {
-	//TqsReport->X = ((int32_t)((NewMicrostick.Y*2)+LastRun.X)/3);
-	//TqsReport->Y = ((int32_t)((NewMicrostick.X*2)+LastRun.Y)/3);
-	//} else {
-	//TqsReport->X = ((int32_t)((NewMicrostick.X*2)+LastRun.X)/3);
-	//TqsReport->Y = ((int32_t)((NewMicrostick.Y*2)+LastRun.Y)/3);
-	//}
-	// Sense Button Matrix - this is a mess!
-	// Active pins 2(PD1),3(PD0),4(PD4)
-	// Sensing Pins 6(PD7), 7(PE6), 8(PB4) ,9(PB5)
 
 	buttonbuffer = 0;
 
@@ -360,7 +330,6 @@ void ReadTqs(TQS_t* TqsReport)
 	PORTD &= ~(1 << PIND1);  // make sure you are Hi-Z and not pullup
 
 	// Poll rotaries
-	//TqsReport->ANT = (((ReadANT*2)+LastRun.ANT)/3); // run ADC conversion as delay
 	Roteries.Y = ReadANT;
 	// poll toggles	T7-10
 	DDRD |= (1<<DDD0); //Set "pin 3" to output
@@ -394,13 +363,9 @@ void ReadTqs(TQS_t* TqsReport)
 	DDRD &= ~(1<<DDD0); // set "pin 3" to Hi-Z
 	PORTD &= ~(1 << PIND0);  // make sure you are Hi-Z and not pullup
 
-	//uint32_t ThrottleMapped = mapLargeNumbers(ReadThrottle,gTqsLimits.Z.Min,gTqsLimits.Z.Max,OUTPUT_MIN_12BIT,OUTPUT_MAX_12BIT);
-	//
-	//TqsReport->Z = ((uint32_t)((ThrottleMapped*2)+LastRun.Z)/3);
+
 	TqsReport->Z  = mapLargeNumbers(ReadThrottle,gTqsLimits.Z.Min,gTqsLimits.Z.Max,OUTPUT_MIN_12BIT,OUTPUT_MAX_12BIT);
-	//if (abs(TqsReport->Z - LastRun.Z) < 5) {
-	//TqsReport->Z = LastRun.Z;
-	//}
+
 	TqsReport->RNG = MapRoteries(Roteries.X,gDetents.X);
 	TqsReport->ANT = MapRoteries(Roteries.Y,gDetents.Y);
 
@@ -410,13 +375,7 @@ void ReadTqs(TQS_t* TqsReport)
 	} else {
 	TqsReport->Buttons = buttonbuffer;
 	}
-	
 
-	//LastRun.X = TqsReport->X;
-	//LastRun.Y = TqsReport->Y;
-	//LastRun.Z = TqsReport->Z;
-	//LastRun.ANT = TqsReport->ANT;
-	//LastRun.RNG = TqsReport->RNG;
 
 }
 
@@ -494,6 +453,9 @@ void exitConfig(void) {
 
 void UpdateMinMax(void) {
 	if (!gIsMinMaxing){
+
+		ReadMicrostickZero();
+
 		gTqsLimits.Z.Min = 2000;
 		gTqsLimits.Z.Max = 2100;
 
@@ -523,27 +485,3 @@ void UpdateMinMax(void) {
 	gTqsLimits.Y.Max = max(gTqsLimits.Y.Max,TempVar);
 
 }
-
-//void processOutEndpoint(uint8_t inOptions)
-//{
-	//bool isReboot = (inOptions & RebootDevice)? true:false;
-	//bool isCenter = (inOptions & CenterDevice)? true:false;
-//
-	//inOptions &= ~(RebootDevice); //make sure RebootFlag doesn't carry over)
-	//inOptions &= ~(CenterDevice); //make sure center doesn't carry over)
-//
-	//if (isReboot) {
-		//// then reboot.. no need to do anything as ram will be wiped.
-		//RebootToBootloader();
-		//// JoystickRunning = false;
-		//// return;
-	//}
-//
-	//if (isCenter) {
-		//// if centering, then do just that, don't try and change config
-		//ReadMicrostickZero();
-		//} else {
-		//gOptions = inOptions;
-		//exitConfig();
-	//}
-//}
