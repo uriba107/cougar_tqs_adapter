@@ -10,14 +10,14 @@
 // configure Global EEPROM pointers
 uint8_t EEMEM NonVolatileOptions; // Unused stuff. left here not to mess up the address allocation for data retrivals.
 
-uint16_t EEMEM NonVolatileThrottleMin;
-uint16_t EEMEM NonVolatileThrottleMax;
-uint16_t EEMEM NonVolatileMicrostickXMin;
-uint16_t EEMEM NonVolatileMicrostickXMax;
-uint16_t EEMEM NonVolatileMicrostickYMin;
-uint16_t EEMEM NonVolatileMicrostickYmax;
-uint16_t EEMEM NonVolatileRngDetent;
-uint16_t EEMEM NonVolatileAntDetent;
+uint16_t EEMEM NonVolatileThrottleMin =  THROTTLE_MIN;
+uint16_t EEMEM NonVolatileThrottleMax = THROTTLE_MAX;
+uint16_t EEMEM NonVolatileMicrostickXMin = MICROSTICK_MIN;
+uint16_t EEMEM NonVolatileMicrostickXMax = MICROSTICK_MAX;
+uint16_t EEMEM NonVolatileMicrostickYMin = MICROSTICK_MIN;
+uint16_t EEMEM NonVolatileMicrostickYmax = MICROSTICK_MAX;
+uint16_t EEMEM NonVolatileRngDetent = RNG_DETENT;
+uint16_t EEMEM NonVolatileAntDetent = RNG_DETENT;
 
 
 TqsLimits_t gTqsLimits;
@@ -133,28 +133,28 @@ void WriteMem(void){
 
 
 	if (gTqsLimits.Z.Min != VolatileThrottleMin) {
-		eeprom_write_word(&NonVolatileThrottleMin,gTqsLimits.Z.Min);
+		eeprom_update_word(&NonVolatileThrottleMin,gTqsLimits.Z.Min);
 	}
 	if (gTqsLimits.Z.Max != VolatileThrottleMax) {
-		eeprom_write_word(&NonVolatileThrottleMax,gTqsLimits.Z.Max);
+		eeprom_update_word(&NonVolatileThrottleMax,gTqsLimits.Z.Max);
 	}
 	if (gTqsLimits.X.Min != VolatileMicrostickXMin) {
-		eeprom_write_word(&NonVolatileMicrostickXMin,gTqsLimits.X.Min);
+		eeprom_update_word(&NonVolatileMicrostickXMin,gTqsLimits.X.Min);
 	}
 	if (gTqsLimits.X.Max != VolatileMicrostickXMax) {
-		eeprom_write_word(&NonVolatileMicrostickXMax,gTqsLimits.X.Max);
+		eeprom_update_word(&NonVolatileMicrostickXMax,gTqsLimits.X.Max);
 	}
 	if (gTqsLimits.Y.Min != VolatileMicrostickYMin) {
-		eeprom_write_word(&NonVolatileMicrostickYMin,gTqsLimits.Y.Min);
+		eeprom_update_word(&NonVolatileMicrostickYMin,gTqsLimits.Y.Min);
 	}
 	if (gTqsLimits.Y.Max != VolatileMicrostickYmax) {
-		eeprom_write_word(&NonVolatileMicrostickYmax,gTqsLimits.Y.Max);
+		eeprom_update_word(&NonVolatileMicrostickYmax,gTqsLimits.Y.Max);
 	}
 	if (gDetents.Y != VolatileAntDetent) {
-		eeprom_write_word(&NonVolatileAntDetent,gDetents.Y);
+		eeprom_update_word(&NonVolatileAntDetent,gDetents.Y);
 	}
 	if (gDetents.X != VolatileRngDetent) {
-		eeprom_write_word(&NonVolatileRngDetent,gDetents.X);
+		eeprom_update_word(&NonVolatileRngDetent,gDetents.X);
 	}
 }
 
@@ -183,9 +183,10 @@ void ReadMem(void){
 	VolatileAntDetent = eeprom_read_word(&NonVolatileAntDetent);
 
 	// Check and place values
-	#define EEPROM_EMPTY_BYTE(b) (b == 0xFF)
-	#define EEPROM_EMPTY_WORD(w) (w == 0xFFFF)
-
+	//#define EEPROM_EMPTY_BYTE(b) (b == 0xFF)
+	//#define EEPROM_EMPTY_WORD(w) (w == 0xFFFF)
+	#define EEPROM_EMPTY_BYTE(b) (b == 0)
+	#define EEPROM_EMPTY_WORD(w) (w == 0)
 	// result = a > b ? x : y;
 
 	//gOptions = EEPROM_EMPTY_BYTE(VolatileOptions) ? 0 : VolatileOptions;
@@ -260,6 +261,18 @@ int16_t MapRoteries(uint16_t RawData,uint16_t Detent) {
 	}
 }
 
+int16_t MapCurveRoteries(uint16_t RawData,uint16_t Detent) {
+	if (abs(RawData - Detent) < 2) {
+		return 0;
+	}
+	if (RawData > Detent) {
+		return 	mapCurve(RawData,Detent,1023,0,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
+
+		} else {
+		return mapCurve(RawData,0,Detent,OUTPUT_MIN_10BIT,0,ANT_SENSETIVITY);
+
+	}
+}
 void ReadTqs(TQS_t* TqsReport)
 {
 	static Microstick_Report_Data_t MicrostickHistory[3];
@@ -367,13 +380,13 @@ void ReadTqs(TQS_t* TqsReport)
 	TqsReport->Z  = mapLargeNumbers(ReadThrottle,gTqsLimits.Z.Min,gTqsLimits.Z.Max,OUTPUT_MIN_12BIT,OUTPUT_MAX_12BIT);
 
 	TqsReport->RNG = MapRoteries(Roteries.X,gDetents.X);
-	TqsReport->ANT = MapRoteries(Roteries.Y,gDetents.Y);
+	TqsReport->ANT = MapCurveRoteries(Roteries.Y,gDetents.Y);
 
 	buttonbuffer = (buttonbuffer >> 1);
 	if ((buttonbuffer & AllButtons) == AllButtons) {
-	TqsReport->Buttons = 0;
-	} else {
-	TqsReport->Buttons = buttonbuffer;
+		TqsReport->Buttons = 0;
+		} else {
+		TqsReport->Buttons = buttonbuffer;
 	}
 
 
@@ -410,14 +423,14 @@ void ConfigDetection(uint16_t Buttons){
 		} else { // if we are not in config mode
 		if (gConfigTimer == 0) {
 			if ((Buttons & ConfigMode) == ConfigMode) {
-//			if ((Buttons & SbOpen) && (Buttons & Uncage)) {
+				//			if ((Buttons & SbOpen) && (Buttons & Uncage)) {
 				gConfigTimer = millis();
 			}
 			} else if (millis() - gConfigTimer >= 1500) {
 			gIsConfig = true;
 			gConfigTimer = millis();
 			} else {
-	//		if (!(Buttons & SbOpen) && !(Buttons & Uncage)) {
+			//		if (!(Buttons & SbOpen) && !(Buttons & Uncage)) {
 			if ((Buttons & ConfigMode) != ConfigMode) {
 
 				gConfigTimer = 0;
@@ -428,14 +441,14 @@ void ConfigDetection(uint16_t Buttons){
 
 void CheckBootTimer(uint16_t Buttons) {
 	if (gRebootTimer == 0) {
-//		if ((Buttons & SbOpen) && (Buttons & Uncage) && (Buttons & CursorEnable)) {
+		//		if ((Buttons & SbOpen) && (Buttons & Uncage) && (Buttons & CursorEnable)) {
 		if ((Buttons & BootLoader) == BootLoader) {
 			gRebootTimer = millis();
 		}
 		} else if (millis() - gRebootTimer >= 5000) {
 		RebootToBootloader();
 		} else {
-//		if (!(Buttons & SbOpen) && !(Buttons & Uncage) && !(Buttons & CursorEnable)) {
+		//		if (!(Buttons & SbOpen) && !(Buttons & Uncage) && !(Buttons & CursorEnable)) {
 		if ((Buttons & BootLoader) != BootLoader) {
 			gRebootTimer = 0;
 		}

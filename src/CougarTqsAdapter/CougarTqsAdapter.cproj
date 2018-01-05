@@ -187,6 +187,8 @@
       </framework-data>
     </AsfFrameworkConfig>
     <avrtool />
+    <ResetRule>0</ResetRule>
+    <EraseKey />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <ToolchainSettings>

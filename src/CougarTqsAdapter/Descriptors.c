@@ -109,7 +109,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
 	.VendorID               = 0x1029,
 	.ProductID              = 0xF16A,
-	.ReleaseNumber          = VERSION_BCD(0,0,6),
+	.ReleaseNumber          = VERSION_BCD(0,0,7),
 
 	.ManufacturerStrIndex   = STRING_ID_Manufacturer,
 	.ProductStrIndex        = STRING_ID_Product,

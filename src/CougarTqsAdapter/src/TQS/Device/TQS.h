@@ -14,7 +14,10 @@
 
 #define CONFIG_TIMEOUT 20000
 #define DEADZONE 5
-#define SENSETIVITY 5.0
+#define SENSETIVITY 3.0
+#define ANT_SENSETIVITY 5.0
+
+
 
 #define OUTPUT_MIN_8BIT -128
 #define OUTPUT_MAX_8BIT 127
@@ -48,11 +51,6 @@
 #define ReadRNG ReadAxis(RNG_CH,0)
 #define ReadThrottle readSPIADC()
 
-//enum ConfigOptions {
-    //FlipMicrostick = 0x01,
-	//CenterDevice = 0x40,
-	//RebootDevice = 0x80,
-//};
 
 enum TqsButtons {
    CursorEnable = 0x01,
@@ -132,6 +130,8 @@ void setStatusLed(uint8_t power);
 uint16_t readSPIADC(void);
 Microstick_Report_Data_t mapMicrostick(Microstick_Report_Data_Raw_t* RawAxis);
 int16_t MapRoteries(uint16_t RawData,uint16_t Detent);
+int16_t MapCurveRoteries(uint16_t RawData,uint16_t Detent);
+
 
 
 void ReadRoteriesDetent(void);
