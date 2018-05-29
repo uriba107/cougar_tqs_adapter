@@ -185,8 +185,8 @@ void ReadMem(void){
 	// Check and place values
 	//#define EEPROM_EMPTY_BYTE(b) (b == 0xFF)
 	//#define EEPROM_EMPTY_WORD(w) (w == 0xFFFF)
-	#define EEPROM_EMPTY_BYTE(b) (b == 0)
-	#define EEPROM_EMPTY_WORD(w) (w == 0)
+#define EEPROM_EMPTY_BYTE(b) ((b) == (0) ? 1 : (b) == (0xFF) ? 1 : 0)
+#define EEPROM_EMPTY_WORD(w) ((w) == (0) ? 1 : (w) == (0xFFFF) ? 1 : 0)
 	// result = a > b ? x : y;
 
 	//gOptions = EEPROM_EMPTY_BYTE(VolatileOptions) ? 0 : VolatileOptions;
@@ -254,10 +254,11 @@ int16_t MapRoteries(uint16_t RawData,uint16_t Detent) {
 	if (abs(RawData - Detent) < 2) {
 		return 0;
 	}
+	int16_t mid = (OUTPUT_MIN_10BIT+OUTPUT_MAX_10BIT)/2;
 	if (RawData > Detent) {
-		return map(RawData,Detent,1023,0,OUTPUT_MAX_10BIT);
+		return map(RawData,Detent,1023,mid,OUTPUT_MAX_10BIT);
 		} else {
-		return map(RawData,0,Detent,OUTPUT_MIN_10BIT,0);
+		return map(RawData,0,Detent,OUTPUT_MIN_10BIT,mid);
 	}
 }
 
@@ -265,12 +266,13 @@ int16_t MapCurveRoteries(uint16_t RawData,uint16_t Detent) {
 	if (abs(RawData - Detent) < 2) {
 		return 0;
 	}
+		int16_t mid = (OUTPUT_MIN_10BIT+OUTPUT_MAX_10BIT)/2;
+
 	if (RawData > Detent) {
-		return 	mapCurve(RawData,Detent,1023,0,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
+		return 	mapCurve(RawData,Detent,1023,mid,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
 
 		} else {
-		return mapCurve(RawData,0,Detent,OUTPUT_MIN_10BIT,0,ANT_SENSETIVITY);
-
+		return mapCurve(RawData,0,Detent,OUTPUT_MIN_10BIT,mid,ANT_SENSETIVITY);
 	}
 }
 void ReadTqs(TQS_t* TqsReport)
@@ -468,9 +470,9 @@ void UpdateMinMax(void) {
 	if (!gIsMinMaxing){
 
 		ReadMicrostickZero();
-
-		gTqsLimits.Z.Min = 2000;
-		gTqsLimits.Z.Max = 2100;
+		int16_t Zmid = (OUTPUT_MAX_12BIT+OUTPUT_MIN_12BIT)/2;
+		gTqsLimits.Z.Min = Zmid-5;
+		gTqsLimits.Z.Max = Zmid+5;
 
 		gTqsLimits.X.Min = gTqsLimits.X.Center - 5;
 		gTqsLimits.X.Max = gTqsLimits.X.Center + 5;
@@ -484,7 +486,7 @@ void UpdateMinMax(void) {
 	uint16_t TempVar;
 	// start with the throttle.
 	TempVar = ReadThrottle;
-	gTqsLimits.Z.Min =  min(gTqsLimits.Z.Min,TempVar);
+	gTqsLimits.Z.Min = min(gTqsLimits.Z.Min,TempVar);
 	gTqsLimits.Z.Max = max(gTqsLimits.Z.Max,TempVar);
 
 	// Now microstick

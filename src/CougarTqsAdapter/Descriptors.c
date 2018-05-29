@@ -70,10 +70,10 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] =
 		HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 		HID_RI_USAGE(8, 0x33), /* Usage Rx */
 		HID_RI_USAGE(8, 0x34), /* Usage Ry */
-		HID_RI_LOGICAL_MINIMUM(16, -512),
-		HID_RI_LOGICAL_MAXIMUM(16, 511),
-		HID_RI_PHYSICAL_MINIMUM(16, -512),
-		HID_RI_PHYSICAL_MAXIMUM(16, 511),
+		HID_RI_LOGICAL_MINIMUM(16, 0),
+		HID_RI_LOGICAL_MAXIMUM(16, 1023),
+		HID_RI_PHYSICAL_MINIMUM(16, 0),
+		HID_RI_PHYSICAL_MAXIMUM(16, 1023),
 		HID_RI_REPORT_COUNT(8, 0x02),
 		HID_RI_REPORT_SIZE(8, 10),
 		HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
@@ -109,7 +109,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
 	.VendorID               = 0x1029,
 	.ProductID              = 0xF16A,
-	.ReleaseNumber          = VERSION_BCD(0,0,7),
+	.ReleaseNumber          = VERSION_BCD(0,0,8),
 
 	.ManufacturerStrIndex   = STRING_ID_Manufacturer,
 	.ProductStrIndex        = STRING_ID_Product,
@@ -204,7 +204,7 @@ const USB_Descriptor_String_t PROGMEM ProductString = USB_STRING_DESCRIPTOR(L"Th
  *  USB host.
  */
 uint16_t CALLBACK_USB_GetDescriptor(const uint16_t wValue,
-                                    const uint8_t wIndex,
+                                    const uint16_t wIndex,
                                     const void** const DescriptorAddress)
 {
 	const uint8_t  DescriptorType   = (wValue >> 8);
