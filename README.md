@@ -18,11 +18,15 @@ Schematics can be found in the "*hardware*" folder.
 for more details on the build process:
 http://pits.108vfs.org/uriba/standalone-cougar-tqs-part-i/
 
+In addition, you can buy a complete product based on the base design from ViperCore a well know store in the Viper pit builder community.
+http://www.vipercore.nl/index.php/webshop/view/productdetails/virtuemart_product_id/57/virtuemart_category_id/14
+
 ##### Software
 Source code provided can compiled and opened using Atmel Studio 7.
 for more details check out the relevent blog posts:
 http://pits.108vfs.org/uriba/standalone-cougar-tqs-part-ii/
 http://pits.108vfs.org/uriba/standalone-cougar-tqs-part-iii/
+
 
 ##### Installation
 Connect the Arduino Pro-micro to the computer, Drivers may be needed.
