@@ -251,10 +251,12 @@ Microstick_Report_Data_t ReadMicrostick(void){
 }
 
 int16_t MapRoteries(uint16_t RawData,uint16_t Detent) {
-	if (abs(RawData - Detent) < 2) {
-		return 0;
-	}
 	int16_t mid = (OUTPUT_MIN_10BIT+OUTPUT_MAX_10BIT)/2;
+
+	if (abs(RawData - Detent) < 2) {
+		return mid;
+	}
+
 	if (RawData > Detent) {
 		return map(RawData,Detent,1023,mid,OUTPUT_MAX_10BIT);
 		} else {
@@ -263,16 +265,16 @@ int16_t MapRoteries(uint16_t RawData,uint16_t Detent) {
 }
 
 int16_t MapCurveRoteries(uint16_t RawData,uint16_t Detent) {
-	if (abs(RawData - Detent) < 2) {
-		return 0;
+	int16_t mid = (OUTPUT_MIN_10BIT+OUTPUT_MAX_10BIT)/2;
+
+	if (abs(RawData - Detent) < 4) {
+		return mid;
 	}
-		int16_t mid = (OUTPUT_MIN_10BIT+OUTPUT_MAX_10BIT)/2;
 
 	if (RawData > Detent) {
-		return 	mapCurve(RawData,Detent,1023,mid,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
-
-		} else {
-		return mapCurve(RawData,0,Detent,OUTPUT_MIN_10BIT,mid,ANT_SENSETIVITY);
+		return 	mapLargeNumbers(RawData,Detent,1023,mid,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
+	} else {
+		return mapLargeNumbers(RawData,0,Detent,OUTPUT_MIN_10BIT,mid,ANT_SENSETIVITY);
 	}
 }
 void ReadTqs(TQS_t* TqsReport)
@@ -282,21 +284,16 @@ void ReadTqs(TQS_t* TqsReport)
 	static Microstick_Report_Data_Raw_t Roteries;
 	static uint16_t buttonbuffer;
 
-	NewMicrostick = ReadMicrostick();
-
-	MicrostickHistory[2] = MicrostickHistory[1];
-	MicrostickHistory[1] = MicrostickHistory[0];
-	MicrostickHistory[0] = NewMicrostick;
-
-	TqsReport->X = (((int32_t)MicrostickHistory[0].X*3)+((int32_t)MicrostickHistory[1].X*2)+((int32_t)MicrostickHistory[2].X))/6;
-	TqsReport->Y = (((int32_t)MicrostickHistory[0].Y*3)+((int32_t)MicrostickHistory[1].Y*2)+((int32_t)MicrostickHistory[2].Y))/6;
-
 	buttonbuffer = 0;
 
 	// I needed to put a delay after each active pin changes state. to avoid delay, I've put the ADC poll for all 4 axis as the delay
 
 	DDRD |= (1<<DDD4); //Set to output
 	PORTD &= ~(1 << PIND4); // pull "pin 4" down
+	
+	// run ADC conversion as delay
+	Roteries.X = ReadRNG;
+		
 	// T6
 	if ((PIND & _BV(7))) {
 		buttonbuffer &= ~(1 << 6);
@@ -312,11 +309,16 @@ void ReadTqs(TQS_t* TqsReport)
 	DDRD &= ~(1<<DDD4); // set port to Hi-Z
 	PORTD &= ~(1 << PIND4);  // make sure you are Hi-Z and not pullup
 
-	//TqsReport->RNG = (((ReadRNG*2)+LastRun.RNG)/3); // run ADC conversion as delay
-	Roteries.X = ReadRNG;
+	// do some math as delay
+ 	TqsReport->RNG = MapRoteries(Roteries.X,gDetents.X);
+
 	// poll toggles	T2-5
 	DDRD |= (1<<DDD1); //Set "pin 2" to output
 	PORTD &= ~(1 << PD1); // pull "pin 3" down
+	
+	// Poll ADC as delay
+	Roteries.Y = ReadANT;
+		
 	//T2
 	if ((PIND & _BV(7))) {
 		buttonbuffer &= ~(1 << 2);
@@ -344,12 +346,22 @@ void ReadTqs(TQS_t* TqsReport)
 	DDRD &= ~(1<<DDD1); // set "pin 2" to Hi-Z
 	PORTD &= ~(1 << PIND1);  // make sure you are Hi-Z and not pullup
 
-	// Poll rotaries
-	Roteries.Y = ReadANT;
+	// Math as delay
+	TqsReport->ANT = MapRoteries(Roteries.Y,gDetents.Y);
+
 	// poll toggles	T7-10
 	DDRD |= (1<<DDD0); //Set "pin 3" to output
 	PORTD &= ~(1 << PIND0); // pull "pin 3" down
 
+	NewMicrostick = ReadMicrostick();
+
+	MicrostickHistory[2] = MicrostickHistory[1];
+	MicrostickHistory[1] = MicrostickHistory[0];
+	MicrostickHistory[0] = NewMicrostick;
+
+	TqsReport->X = (((int32_t)MicrostickHistory[0].X*3)+((int32_t)MicrostickHistory[1].X*2)+((int32_t)MicrostickHistory[2].X))/6;
+	TqsReport->Y = (((int32_t)MicrostickHistory[0].Y*3)+((int32_t)MicrostickHistory[1].Y*2)+((int32_t)MicrostickHistory[2].Y))/6;
+	
 	//T7
 	if ((PIND & _BV(7))) {
 		buttonbuffer &= ~(1 << 7);
@@ -378,11 +390,8 @@ void ReadTqs(TQS_t* TqsReport)
 	DDRD &= ~(1<<DDD0); // set "pin 3" to Hi-Z
 	PORTD &= ~(1 << PIND0);  // make sure you are Hi-Z and not pullup
 
-
 	TqsReport->Z  = mapLargeNumbers(ReadThrottle,gTqsLimits.Z.Min,gTqsLimits.Z.Max,OUTPUT_MIN_12BIT,OUTPUT_MAX_12BIT);
 
-	TqsReport->RNG = MapRoteries(Roteries.X,gDetents.X);
-	TqsReport->ANT = MapCurveRoteries(Roteries.Y,gDetents.Y);
 
 	buttonbuffer = (buttonbuffer >> 1);
 	if ((buttonbuffer & AllButtons) == AllButtons) {
@@ -390,8 +399,6 @@ void ReadTqs(TQS_t* TqsReport)
 		} else {
 		TqsReport->Buttons = buttonbuffer;
 	}
-
-
 }
 
 void ConfigDetection(uint16_t Buttons){
