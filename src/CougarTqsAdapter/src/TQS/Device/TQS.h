@@ -1,7 +1,7 @@
 #ifndef tqs_h__
 #define tqs_h__
 
-#define EARLY_PROTOTYPE
+//#define EARLY_PROTOTYPE
 
 #pragma once
 
