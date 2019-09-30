@@ -272,9 +272,9 @@ int16_t MapCurveRoteries(uint16_t RawData,uint16_t Detent) {
 	}
 
 	if (RawData > Detent) {
-		return 	mapLargeNumbers(RawData,Detent,1023,mid,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
+		return mapCurve(RawData,Detent,1023,mid,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
 	} else {
-		return mapLargeNumbers(RawData,0,Detent,OUTPUT_MIN_10BIT,mid,ANT_SENSETIVITY);
+		return mapCurve(RawData,0,Detent,OUTPUT_MIN_10BIT,mid,ANT_SENSETIVITY);
 	}
 }
 void ReadTqs(TQS_t* TqsReport)

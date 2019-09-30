@@ -1,7 +1,7 @@
 #ifndef tqs_h__
 #define tqs_h__
 
-//#define EARLY_PROTOTYPE
+#define EARLY_PROTOTYPE
 
 #pragma once
 
@@ -88,8 +88,8 @@ typedef struct
 
 typedef struct
 {
-	uint16_t  X; /**< Current absolute joystick X position, as a signed 8-bit integer */
-	uint16_t  Y; /**< Current absolute joystick Y position, as a signed 8-bit integer */
+	uint16_t  X:10; /**< Current absolute joystick X position, as a signed 8-bit integer */
+	uint16_t  Y:10; /**< Current absolute joystick Y position, as a signed 8-bit integer */
 } Microstick_Report_Data_Raw_t;
 
 typedef struct
