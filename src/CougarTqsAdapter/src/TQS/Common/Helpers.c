@@ -120,7 +120,7 @@ int32_t SimpleMapCurve(int32_t inVal, int32_t in_min, int32_t in_max, int32_t ou
 
 	static int16_t midRange;
 	static uint8_t relativePos;
-	static int32_t MappedIn;
+	//static int32_t MappedIn;
 
 	midRange = (in_min+in_max)/2;
 

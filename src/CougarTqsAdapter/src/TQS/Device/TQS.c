@@ -265,18 +265,20 @@ int16_t MapRoteries(uint16_t RawData,uint16_t Detent) {
 }
 
 int16_t MapCurveRoteries(uint16_t RawData,uint16_t Detent) {
-	int16_t mid = (OUTPUT_MIN_10BIT+OUTPUT_MAX_10BIT)/2;
+	//int16_t mid = (OUTPUT_MIN_10BIT+OUTPUT_MAX_10BIT)/2;
+//
+	//if (abs(RawData - Detent) < 4) {
+		//return mid;
+	//}
 
-	if (abs(RawData - Detent) < 4) {
-		return mid;
-	}
-
-	if (RawData > Detent) {
-		return mapCurve(RawData,Detent,1023,mid,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
-	} else {
-		return mapCurve(RawData,0,Detent,OUTPUT_MIN_10BIT,mid,ANT_SENSETIVITY);
-	}
+	return mapCurve(RawData-Detent,OUTPUT_MIN_10BIT-Detent,OUTPUT_MAX_10BIT-Detent,OUTPUT_MIN_10BIT,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
+	//if (RawData > Detent) {
+		//return mapCurve(RawData,Detent,1023,mid,OUTPUT_MAX_10BIT,ANT_SENSETIVITY);
+	//} else {
+		//return mapCurve(RawData,0,Detent,OUTPUT_MIN_10BIT,mid,ANT_SENSETIVITY);
+	//}
 }
+
 void ReadTqs(TQS_t* TqsReport)
 {
 	static Microstick_Report_Data_t MicrostickHistory[3];
@@ -347,7 +349,7 @@ void ReadTqs(TQS_t* TqsReport)
 	PORTD &= ~(1 << PIND1);  // make sure you are Hi-Z and not pullup
 
 	// Math as delay
-	TqsReport->ANT = MapRoteries(Roteries.Y,gDetents.Y);
+	TqsReport->ANT = MapCurveRoteries(Roteries.Y,gDetents.Y);
 
 	// poll toggles	T7-10
 	DDRD |= (1<<DDD0); //Set "pin 3" to output

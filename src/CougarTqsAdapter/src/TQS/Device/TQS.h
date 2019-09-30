@@ -15,7 +15,7 @@
 #define CONFIG_TIMEOUT 20000
 #define DEADZONE 5
 #define SENSETIVITY 3.0
-#define ANT_SENSETIVITY 3.0
+#define ANT_SENSETIVITY 6.0
 
 
 
@@ -140,6 +140,7 @@ uint16_t ReadAxis(uint8_t adcChannel,bool invert_axis);
 void ReadMicrostickZero(void);
 void ReadTqs(TQS_t* JoystickReport);
 void ConfigDetection(uint16_t Buttons);
+void CheckBootTimer(uint16_t Buttons);
 
 void UpdateMinMax(void);
 void exitConfig(void);
