@@ -284,6 +284,7 @@ void ReadTqs(TQS_t* TqsReport)
 	static Microstick_Report_Data_t MicrostickHistory[3];
 	static Microstick_Report_Data_t NewMicrostick;
 	static Microstick_Report_Data_Raw_t Roteries;
+	static uint16_t ThrottleRaw;
 	static uint16_t buttonbuffer;
 
 	buttonbuffer = 0;
@@ -349,7 +350,8 @@ void ReadTqs(TQS_t* TqsReport)
 	PORTD &= ~(1 << PIND1);  // make sure you are Hi-Z and not pullup
 
 	// Math as delay
-	TqsReport->ANT = MapCurveRoteries(Roteries.Y,gDetents.Y);
+	//TqsReport->ANT = MapCurveRoteries(Roteries.Y,gDetents.Y);
+	TqsReport->ANT = MapRoteries(Roteries.Y,gDetents.Y);
 
 	// poll toggles	T7-10
 	DDRD |= (1<<DDD0); //Set "pin 3" to output
@@ -392,8 +394,14 @@ void ReadTqs(TQS_t* TqsReport)
 	DDRD &= ~(1<<DDD0); // set "pin 3" to Hi-Z
 	PORTD &= ~(1 << PIND0);  // make sure you are Hi-Z and not pullup
 
-	TqsReport->Z  = mapLargeNumbers(ReadThrottle,gTqsLimits.Z.Min,gTqsLimits.Z.Max,OUTPUT_MIN_12BIT,OUTPUT_MAX_12BIT);
-
+	ThrottleRaw = ReadThrottle;
+	TqsReport->Z  = mapLargeNumbers(ThrottleRaw,gTqsLimits.Z.Min,gTqsLimits.Z.Max,OUTPUT_MIN_12BIT,OUTPUT_MAX_12BIT);
+	
+	if (ThrottleRaw > gTqsLimits.Z.Max) { //Max value is IDLE
+			buttonbuffer |= (1 << 11); //press "Button"
+		} else {
+			buttonbuffer &= ~(1 << 11); // Release "Button"
+	}
 
 	buttonbuffer = (buttonbuffer >> 1);
 	if ((buttonbuffer & AllButtons) == AllButtons) {

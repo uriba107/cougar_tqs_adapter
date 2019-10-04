@@ -1,7 +1,7 @@
 #ifndef tqs_h__
 #define tqs_h__
 
-//#define EARLY_PROTOTYPE
+//#define EARLY_PROTOtYPE
 
 #pragma once
 
@@ -33,7 +33,7 @@
 #define RNG_DETENT 511
 #define ANT_DETENT 511
 
-#ifdef EARLY_PROTOTYPE
+#ifdef EARLY_PROTOtYPE
 #define X_CH 4
 #define Y_CH 5
 #define ANT_CH 7
@@ -63,6 +63,7 @@ enum TqsButtons {
    MrmOveride = 0x80,
    SbOpen = 0x100,
    SbClose = 0x200,
+   CutOff = 0x400,
    ConfigMode = 0x120,
    BootLoader = 0x121,
    AllButtons = 0x3FF,
@@ -99,7 +100,7 @@ typedef struct
 	uint16_t  Z:12; /** Throttle - Z */
 	int16_t  ANT:10; /**  Ant - Ry */
 	int16_t  RNG:10; /**  Range - Rx */
-	uint16_t  Buttons:10;
+	uint16_t  Buttons:11;
 } TQS_t;
 
 extern TqsLimits_t TqsLimits;
