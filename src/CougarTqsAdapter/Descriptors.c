@@ -79,13 +79,13 @@ const USB_Descriptor_HIDReport_Datatype_t PROGMEM JoystickReport[] =
 		HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
 		HID_RI_USAGE_PAGE(8, 0x09), /* Button */
 		HID_RI_USAGE_MINIMUM(8, 0x01),
-		HID_RI_USAGE_MAXIMUM(8, 10),
+		HID_RI_USAGE_MAXIMUM(8, 11),
 		HID_RI_LOGICAL_MINIMUM(8, 0x00),
 		HID_RI_LOGICAL_MAXIMUM(8, 0x01),
 		HID_RI_REPORT_SIZE(8, 0x01),
-		HID_RI_REPORT_COUNT(8, 10),
+		HID_RI_REPORT_COUNT(8, 11),
 		HID_RI_INPUT(8, HID_IOF_DATA | HID_IOF_VARIABLE | HID_IOF_ABSOLUTE),
-		HID_RI_REPORT_SIZE(8, 0x06),
+		HID_RI_REPORT_SIZE(8, 0x05),
 		HID_RI_REPORT_COUNT(8, 0x01),
 		HID_RI_INPUT(8, HID_IOF_CONSTANT),
 	HID_RI_END_COLLECTION(0),
@@ -109,7 +109,7 @@ const USB_Descriptor_Device_t PROGMEM DeviceDescriptor =
 
 	.VendorID               = 0x1029,
 	.ProductID              = 0xF16A,
-	.ReleaseNumber          = VERSION_BCD(0,1,1),
+	.ReleaseNumber          = VERSION_BCD(0,1,2),
 
 	.ManufacturerStrIndex   = STRING_ID_Manufacturer,
 	.ProductStrIndex        = STRING_ID_Product,

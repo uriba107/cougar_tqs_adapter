@@ -77,7 +77,7 @@
 			uint16_t  Z:12; /**< Throttle - Z */
 			int16_t  RNG:10; /** Range - Rx */
 			int16_t  ANT:10; /** Ant - Ry */
-			uint16_t  Buttons:10;
+			uint16_t  Buttons:11;
 		} USB_JoystickReport_Data_t;
 
 	/* Function Prototypes: */
