@@ -1,7 +1,7 @@
 #ifndef tqs_h__
 #define tqs_h__
 
-//#define EARLY_PROTOtYPE
+#define EARLY_PROTOTYPE
 
 #pragma once
 
@@ -33,7 +33,7 @@
 #define RNG_DETENT 511
 #define ANT_DETENT 511
 
-#ifdef EARLY_PROTOtYPE
+#ifdef EARLY_PROTOTYPE
 #define X_CH 4
 #define Y_CH 5
 #define ANT_CH 7

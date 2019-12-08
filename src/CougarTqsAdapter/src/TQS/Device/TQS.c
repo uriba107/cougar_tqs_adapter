@@ -397,7 +397,7 @@ void ReadTqs(TQS_t* TqsReport)
 	ThrottleRaw = ReadThrottle;
 	TqsReport->Z  = mapLargeNumbers(ThrottleRaw,gTqsLimits.Z.Min,gTqsLimits.Z.Max,OUTPUT_MIN_12BIT,OUTPUT_MAX_12BIT);
 	
-	if (ThrottleRaw > gTqsLimits.Z.Max) { //Max value is IDLE
+	if ((ThrottleRaw) > gTqsLimits.Z.Max*1.02) { //Max value is IDLE
 			buttonbuffer |= (1 << 11); //press "Button"
 		} else {
 			buttonbuffer &= ~(1 << 11); // Release "Button"
