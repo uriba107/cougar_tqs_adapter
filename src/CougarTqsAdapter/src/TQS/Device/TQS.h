@@ -1,7 +1,7 @@
 #ifndef tqs_h__
 #define tqs_h__
 
-#define EARLY_PROTOTYPE
+//#define EARLY_PROTOTYPE
 
 #pragma once
 
@@ -64,7 +64,7 @@ enum TqsButtons {
    SbOpen = 0x100,
    SbClose = 0x200,
    CutOff = 0x400,
-   ConfigMode = 0x120,
+   ConfigMode = 0x101,
    BootLoader = 0x121,
    AllButtons = 0x3FF,
 };
