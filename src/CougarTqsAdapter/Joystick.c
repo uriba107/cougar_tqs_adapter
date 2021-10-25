@@ -152,12 +152,18 @@ void EVENT_USB_Device_ControlRequest(void)
  */
 bool GetNextReport(USB_JoystickReport_Data_t* const ReportData)
 {
+	static TQS_t prevBuffer;
+	bool isChanged = false
+
 	/* Clear the report contents */
 	memset(ReportData, 0, sizeof(USB_JoystickReport_Data_t));
 	//static USB_JoystickReport_Data_t lastRun;
-    static TQS_t buffer;
-    ReadTqs(&buffer);
+    	TQS_t buffer;
+    	ReadTqs(&buffer);
 
+	isChanged = (buffer == prevBuffer);
+	prevBuffer = buffer;
+	
 	ReportData->X = buffer.X;
 	ReportData->Y = buffer.Y;
 	ReportData->Z = buffer.Z;
@@ -176,7 +182,7 @@ bool GetNextReport(USB_JoystickReport_Data_t* const ReportData)
 
 
 	/* Return whether the new report is different to the previous report or not */
-	return true;
+	return isChanged;
 }
 
 /** Function to manage HID report generation and transmission to the host. */
