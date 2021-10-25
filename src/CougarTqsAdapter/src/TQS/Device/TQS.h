@@ -103,6 +103,13 @@ typedef struct
 	uint16_t  Buttons:11;
 } TQS_t;
 
+bool operator==(const TQS_t& lhs, const TQS_t& rhs)
+{
+    return (lhs.X == rhs.X) && (lhs.Y == rhs.Y) && (lhs.Z == rhs.Z) 
+	    && (lhs.RNG == rhs.RNG) && (lhs.ANT == rhs.ANT)
+	    && (lhs.Buttons == rhs.Buttons); 
+};
+
 extern TqsLimits_t TqsLimits;
 extern Microstick_Report_Data_Raw_t gDetents;
 //extern uint8_t gOptions;
